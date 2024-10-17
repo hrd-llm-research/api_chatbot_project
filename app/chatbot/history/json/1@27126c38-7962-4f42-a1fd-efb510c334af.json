@@ -1,0 +1,10 @@
+[
+    {
+        "type": "HumanMessage",
+        "content": "what is easycart"
+    },
+    {
+        "type": "SystemMessage",
+        "content": "According to the retrieved documents, easycart is a mobile application E-commerce system that provides convenience for users. It is one of the 7 development topics implemented by the students of the 11th advanced course of Korea Software HRD Center. The easycart team consisted of two Android and iOS teams, which suggests that the application is designed to be compatible with both Android and iOS devices."
+    }
+]
