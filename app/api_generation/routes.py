@@ -1,6 +1,6 @@
 import jwt
 
-from fastapi import APIRouter, Depends, status, Query, HTTPException
+from fastapi import APIRouter, Depends, status, Query, HTTPException, Path
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Annotated
@@ -25,8 +25,7 @@ async def verify_api_key(
     db: Session = Depends(get_db),
     api_key: str = Depends(api_key_header)
 ):
-    try:
-        
+    try: 
         api_key_record = project_dependencies.verify_api_key(db, api_key)
         payload = jwt.decode(api_key, project_dependencies.SECRET_KEY, algorithms=[project_dependencies.ALGORITHM])
         project_name: str = payload.get("project_name")
@@ -39,10 +38,10 @@ async def verify_api_key(
         )
     
 
-@router.get("/get_project")
+@router.get("/project/get_project/{project_id}")
 def get_project(
     current_user: Annotated[User, Depends(get_current_active_user)],
-    project_id: int,
+    project_id: int = Path(..., ge=1, description="Project ID"),
     db: Session = Depends(get_db),
 ):
     project_record = project_dependencies.get_project_detail(db, project_id)
@@ -54,20 +53,21 @@ def get_project(
         }
     )
 
-@router.delete("/delete")
+@router.delete("/project/delete/{project_id}")
 def delete_project(
     current_user: Annotated[User, Depends(get_current_active_user)],
-    project_id: int,
+    project_id: int = Path(..., ge=1, description="Project ID"),
     db: Session = Depends(get_db),
 ):
-    project_dependencies.delete_project(db, project_id)
+    user = validate_existing_email(db, current_user.email)
+    project_dependencies.delete_project(db, user, project_id)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "Project deleted successfully.",
                  "success": True}
     )
 
-@router.post("/create_project")
+@router.post("/project/create_project")
 def create_project(
     current_user: Annotated[User, Depends(get_current_active_user)],
     project_name: str = Query(...),
@@ -84,7 +84,7 @@ def create_project(
     )
 
 
-@router.get("/get_all_projects")
+@router.get("/project/get_all_projects")
 def get_projects(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
@@ -99,11 +99,12 @@ def get_projects(
         }
     )
 
-@router.patch("/description")
+@router.patch("/project/description/{project_id}")
 def update_description(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-    project_id: int,
     project_description: ProjectDescription,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    project_id: int = Path(..., ge=1, description="Project ID"),
+    
     db: Session = Depends(get_db),
 ):
     project_record = project_dependencies.update_project_description(db, project_id, project_description.description)
@@ -115,11 +116,12 @@ def update_description(
     )
 
 
-@router.post("/create_session")
+@router.post("/session/create_session")
 async def create_new_chat(
     db: Session = Depends(get_db),
     project: str = Depends(verify_api_key)
 ):
+
     session_record = project_dependencies.create_external_session(db, project.id)
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
@@ -130,7 +132,7 @@ async def create_new_chat(
         }
     )
  
-@router.get("/get_all_sessions")   
+@router.get("/session/get_all_sessions")   
 async def get_all_sessions(
     db: Session = Depends(get_db),
     project: str = Depends(verify_api_key)
@@ -146,12 +148,14 @@ async def get_all_sessions(
     )
     
 
-@router.delete("/delete/{external_session_id}")
+@router.delete("/session/delete/{external_session_id}")
 def delete_session(
+    external_session_id:int = Path(..., ge=1, description="External Session ID"  ),
     db: Session = Depends(get_db),
     project: str = Depends(verify_api_key)
 ):
-    project_dependencies.delete_external_session(db, project.id)
+    print("project from routes: ", project.id)
+    project_dependencies.delete_external_session(db, project.id, project.project_name, external_session_id)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={
@@ -160,4 +164,36 @@ def delete_session(
         }
     )
 
-    
+@router.post("/session/save/{external_session_id}")
+def saved_session(
+    external_session_id: int = Path(..., ge=1, description="External Session ID"  ),
+    db: Session = Depends(get_db),
+    project: str = Depends(verify_api_key)
+):
+    project_dependencies.save_external_session(db, external_session_id, project.project_name)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "message": "Chat session saved successfully.",
+            "success": True
+        }
+    )
+
+
+@router.get("/chat/get_chat_history")
+def get_chat_history_by_session_id(
+    external_session_id: int = Query(..., ge=1, description="External Session ID"  ),
+    db: Session = Depends(get_db),
+    project: str = Depends(verify_api_key),
+    limit: int = Query(10, ge=1, description="Number of messages to retrieve."),
+    page: int = Query(1, ge=1, description="Page number for pagination."),
+):
+    history = project_dependencies.get_history_by_external_session_id(db, project, external_session_id, limit, page)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "message": "Chat history retrieved successfully.",
+            "success": True,
+            "payload": history       
+        }
+    )

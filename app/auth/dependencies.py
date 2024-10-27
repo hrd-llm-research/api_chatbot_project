@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from app.utils import get_db
 from datetime import datetime
+from app.mail.dependencies import send_mail
 
 import random
 import jwt
@@ -51,7 +52,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(days=30)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHMS)
     return encoded_jwt
@@ -149,3 +150,31 @@ def find_user(db: Session, user_id: int):
             detail="User not found"
         )
     return user.username
+
+def validate_email(db: Session, email: str):
+    user = crud.get_user_by_email(db, email)
+    if user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already exists"
+        )
+    return True
+
+def create_user(
+    db:Session,
+    user
+):
+    try:
+        validate_email(db, user.email)
+        
+        user = crud.create_user(db, user)
+        code = generate_opt(db, user.id)
+        
+        send_mail(user.email, 'Verify Code to activate the account', f'Here is the {code} for account activation. Please enter your code.')
+        return user.to_dict()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    

@@ -52,8 +52,14 @@ class UserCreate(User):
         
 class FileSchemaDB(BaseModel):
     id: int
-    session_id: int
-    collection_name: str
+    session_id: int = Field(
+        ..., ge=1,
+        description="Session ID must be a positive integer"
+    )
+    collection_name: str = Field(
+        ..., min_length=2,
+        description="Collection name must be at least 2 characters long"
+    )
     file_name: str
     created_at: datetime
     
@@ -70,9 +76,15 @@ class ChatModel(BaseModel):
     chroma_db: str
     
 class ProjectDescription(BaseModel):
-    description: str
+    description: str = Field(
+        default="string",
+        min_length=2,
+        description="Description must be at least 10 characters long"
+    )
 
-# class CreateProjectModel(BaseModel):
-#     user_id: int
-#     api_key: str
-#     project_name: str
+class ModelCustomizationCreate(BaseModel):
+    model_id: int = Field(...)
+    provider_api_key: str = Field(...)
+    temperature: float = Field(...)
+    max_token: int = Field(..., ge=1)
+    

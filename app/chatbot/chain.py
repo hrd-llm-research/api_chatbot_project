@@ -1,15 +1,17 @@
 import os
+import json
 
+from typing import Optional 
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import Runnable , RunnableSequence, RunnableBranch, RunnableParallel, RunnableLambda
 from langchain.schema.output_parser import StrOutputParser
 from langchain_chroma import Chroma
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from app.db_connection.database import SessionLocal
 from langchain.pydantic_v1 import BaseModel, Field
 from app.auth.dependencies import find_user
@@ -19,6 +21,9 @@ from app.db_connection.schemas import MessageHistoryCreate
 from app.session import dependencies as session_dependencies
 from app.minIO import dependencies as minio_dependencies
 from .dependencies import write_history_as_json, write_history_as_text
+from app.db_connection import models
+from app.model_provider.routes import llm_cache
+from app.model_provider.dependencies import get_lm_from_cache
 
 load_dotenv()
 
@@ -82,26 +87,31 @@ class CreateRAGChainRunnable(Runnable):
     def invoke(self, inputs: dict, *args, **kwargs):
         db = SessionLocal()
         
-        """declare variables getting inputs"""
+        """declare variables from inputs"""
         question = inputs.get("input")
         user_id = inputs.get("user_id") 
         session_id = inputs.get("session_id")
         file_id = inputs.get("file_id")
         
+        
         """declare variables"""
         session_record = session_dependencies.is_session_available_by_session_id(db, user_id, session_id)
-        file_record = is_file_available(db, file_id)
+        if file_id is not None:
+            file_record = is_file_available(db, file_id)
+            collection_name = file_record.collection_name  
+        else:
+            collection_name = "my_collection" 
         
         username = find_user(db, user_id)
-        chroma_db = get_chroma_name(user_id)
-        collection_name = file_record.collection_name                                                                                                        
+        chroma_db = get_chroma_name(user_id, session_id)
+                                                                                                         
         history_file_name = str(user_id)+'@'+str(session_record.session)
         
         """declare file variables"""
-        history_text_file = history_file_name+'.txt'
+        # history_text_file = history_file_name+'.txt'
         history_json_file = history_file_name+'.json'
         
-        history_text_file_dir = os.path.join(history_dir, "txt", history_text_file)
+        # history_text_file_dir = os.path.join(history_dir, "txt", history_text_file)
         history_json_file_dir = os.path.join(history_dir, "json", history_json_file)
         persistent_dir = os.path.join(current_dir, "..", "chroma", "chroma_db", chroma_db)
         
@@ -119,35 +129,28 @@ class CreateRAGChainRunnable(Runnable):
         if not history_record == None: 
             
             """If history dir exists then download from minIO server"""
-            if not os.path.exists(history_text_file_dir):
-                minio_dependencies.download_file(username, history_text_file, history_text_file_dir)
-                
-                with open(history_text_file_dir, 'r') as text_file:
-                    docs = text_file.readlines()
-                    chat_history = docs
-                
             if not os.path.exists(history_json_file_dir):
                 minio_dependencies.download_file(username, history_json_file, history_json_file_dir)
                 
-            if os.path.exists(history_text_file_dir):
-                with open(history_text_file_dir, 'r') as text_file:
-                    docs = text_file.readlines()
+            if os.path.exists(history_json_file_dir):
+                with open(history_json_file_dir, 'r') as json_file:
+                    docs = json.load(json_file)
                     chat_history = docs
             
         """If history not found, insert message into database"""
         if history_record == None:
-            request = MessageHistoryCreate(
+            request = models.MessageHistory(
                     session_id=session_id,
                     history_name=history_file_name
             )
             history_record = crud.create_history(db, request)
                 
+
         vector_store = Chroma(
-            collection_name=collection_name,
-            # collection_name="my_collection",
-            embedding_function=embeddings,
-            persist_directory=persistent_dir
-        )
+                collection_name=collection_name,
+                embedding_function=embeddings,
+                persist_directory=persistent_dir
+            )
             
         retriever = vector_store.as_retriever(
             search_type="similarity_score_threshold",
@@ -156,7 +159,7 @@ class CreateRAGChainRunnable(Runnable):
                 "score_threshold":0.2
             }
         )
-                
+        # self.llm = get_lm_from_cache(user_id)
         retrieved_docs = RunnableBranch(
             (
                 # Both empty string and empty list evaluate to False
@@ -171,7 +174,7 @@ class CreateRAGChainRunnable(Runnable):
         contextual = retrieved_docs.invoke(
             {
                 "input": question,
-                "chat_history":chat_history
+                "chat_history":chat_history[-6:]
             }
         )    
             
@@ -179,37 +182,63 @@ class CreateRAGChainRunnable(Runnable):
         new_history = []
         new_history.append(HumanMessage(content=question))
         
-        write_history_as_text(history_text_file_dir, new_history)
         write_history_as_json(history_json_file_dir, new_history)
         
         return {
             "input": question,
             "context": contextual,
             "chat_history": chat_history,
+            "history_filename": history_file_name
         }
-    
+qa_branch = (
+    qa_prompt | llm | StrOutputParser()
+)
+
+def combine_chain(qa, history_filename):
+    try:
+        history_json_file = history_filename+'.json'
+        
+        history_json_file_dir = os.path.join(history_dir, "json", history_json_file)
+        
+        """Write file to local"""
+        new_history = []
+        new_history.append(SystemMessage(content=qa))
+            
+        write_history_as_json(history_json_file_dir, new_history)
+        return qa
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while executing the RAG chain."
+        )
+
 chain = RunnableSequence(
     CreateRAGChainRunnable()
     | (lambda x: {
         "input":x['input'],
         "context":x['context'],
         "chat_history":x['chat_history'],
+        "history_filename":x['history_filename']
     })
-    | qa_prompt
-    | llm
-    | StrOutputParser()
+    | RunnableParallel(branches={"qa":qa_branch, "history_filename": (lambda x: x['history_filename'])})
+    | RunnableLambda(lambda x: combine_chain(x['branches']['qa'], x['branches']['history_filename']))
 )
     
 class Request(BaseModel):
-    input: str
+    input: str = Field(
+        ...,
+        description="The user's question."
+    )
     user_id: int = Field(
-        ...
+        ..., ge=1,
+        description="User ID for identifying the user."
     )
     session_id: int = Field(
-        ...
+        ..., ge=1,
+        description="Session ID for identifying the session."
     )
-    file_id: int = Field(
-        ...
+    file_id: Optional[int] = Field(
+        description="If you want to chat with all documents you can set it to null.",
     )
     
 chain = chain.with_types(input_type=Request)

@@ -11,7 +11,7 @@ from app.auth.crud import create_user
 from app.mail.dependencies import send_mail
 
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 432003
 
 router = APIRouter(
     prefix="/auth",
@@ -21,11 +21,8 @@ router = APIRouter(
 
 @router.post("/register")
 async def register(user: UserCreate, db: Session = Depends(get_db)):
-    user = create_user(db, user)
-    code = dependencies.generate_opt(db, user.id)
-    user_response = user.to_dict()
+    user_response = dependencies.create_user(db, user)
     
-    send_mail(user.email, 'Verify Code to activate the account', f'Here is the {code} for account activation. Please enter your code.')
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
         content={"message": "You registered successfully",
@@ -52,8 +49,8 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()] , db:
 
 @router.post("/reset-password")
 async def reset_password(
-    password: str,
-    email: str,
+    password: str = Query(...),
+    email: str = Query(...),
     db: Session = Depends(get_db)
 ):
     user = dependencies.validate_existing_email(db, email)
@@ -67,8 +64,8 @@ async def reset_password(
 
 @router.post("/code-verify")
 async def code_verify(
-    email: str, 
-    code: Annotated[str, Query(min_length=6, max_length=6)],
+    code: str = Query("000000",min_length=6, max_length=6),
+    email: str = Query("example@example.com", description="User's email"),  
     db: Session = Depends(get_db)
 ):
     user = dependencies.validate_existing_email(db, email)
@@ -83,7 +80,7 @@ async def code_verify(
     
 @router.post("/resend-code")
 async def resend_code(
-    email: str,
+    email: str = Query("example@example.com", description="User's email"),
     db: Session = Depends(get_db)  
 ):
     user = dependencies.validate_existing_email(db, email)

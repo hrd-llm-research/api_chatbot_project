@@ -28,7 +28,10 @@ embeddings = FastEmbedEmbeddings()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 history_dir = os.path.join(current_dir, "history")
 
-lm = ChatGroq()
+lm = ChatGroq(
+    model=os.environ.get('OPENAI_MODEL_NAME'),
+    temperature=1,
+)
 
 def retrieve_document_from_chroma(
     chat_request: ChatModel, top_k: int=5, score_threshold: float=0.5  
@@ -78,54 +81,59 @@ _prompt = ChatPromptTemplate.from_messages(
 prompt_template = PromptTemplate(
         input_variables=["context"],
         template=(
-            "Based on the following document content, suggest four questions that would help the user understand the material better:\n\n"
+            "Based on the following document content, suggest four questions that is the main understanding of the document that would cover all the document.\n\n"
             "{context}\n\n"
-            "Please provide four questions:"
+            "Please suggest 4 questions:"
         ),
     )
 
 class RetrieverRunnable(Runnable):
     
     def invoke(self, inputs: dict,*args, **kwargs):
-        db = SessionLocal()
-        
-        """declare variables getting inputs"""
-        user_id = inputs.get("user_id") 
-        session_id = inputs.get("session_id")
-        file_id = inputs.get("file_id")
-        
-        """declare variables"""
-        file_record = is_file_available(db, file_id)
+        try:
+            db = SessionLocal()
+            
+            """declare variables getting inputs"""
+            user_id = inputs.get("user_id") 
+            session_id = inputs.get("session_id")
+            file_id = inputs.get("file_id")
+            
+            """declare variables"""
+            file_record = is_file_available(db, file_id)
 
-        chroma_db = get_chroma_name(user_id)
-        collection_name = file_record.collection_name   
-        
-        persistent_dir = os.path.join(current_dir, "..", "chroma", "chroma_db", chroma_db)
-        
-        if not os.path.exists(persistent_dir):
-            raise HTTPException(
-                status_code=404,
-                detail=f"Chroma database '{chroma_db}' does not exist in the directory."
+            chroma_db = get_chroma_name(user_id, session_id)
+            collection_name = file_record.collection_name   
+            
+            persistent_dir = os.path.join(current_dir, "..", "chroma", "chroma_db", chroma_db)
+            
+            if not os.path.exists(persistent_dir):
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Chroma database '{chroma_db}' does not exist in the directory."
+                )
+            
+            vector_store = Chroma(
+                collection_name=collection_name,
+                embedding_function=embeddings,
+                persist_directory=persistent_dir
             )
-        
-        vector_store = Chroma(
-            collection_name=collection_name,
-            embedding_function=embeddings,
-            persist_directory=persistent_dir
-        )
-        
-        # Step 5: Use the retriever to get relevant documents from the Chroma collection
-        retriever = vector_store.as_retriever()
-        query = "What are the main topics discussed in the document?"
-        retrieved_docs = retriever.invoke(query)
+            
+            # Step 5: Use the retriever to get relevant documents from the Chroma collection
+            retriever = vector_store.as_retriever(
+                search_type="similarity_score_threshold",
+                search_kwargs={"k": 20, "score_threshold": 0.2},
+            )
+            query = "What are the main topics discussed in the document?"
+            retrieved_docs = retriever.invoke(query)
 
-        # Combine the retrieved documents into a single context for the prompt
-        context = "\n".join([doc.page_content for doc in retrieved_docs])
-        
-        return {
-            "context": context
-        }
-
+            # Combine the retrieved documents into a single context for the prompt
+            context = "\n".join([doc.page_content for doc in retrieved_docs])
+            
+            return {
+                "context": context
+            }
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         
 llm_chain = RunnableSequence(
     RetrieverRunnable()
@@ -137,10 +145,12 @@ llm_chain = RunnableSequence(
     
 class Request(BaseModel):
     user_id: int = Field(
-        ...
+        ..., ge=1,
+        description="User ID for which the request is being made."
     )
     session_id: int = Field(
-        ...
+        ..., ge=1,
+        description="Session ID for which the request is being made."
     )
     file_id: int = Field(
         ...

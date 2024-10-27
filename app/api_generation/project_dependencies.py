@@ -1,6 +1,7 @@
 import jwt
 import uuid
 import os
+import json
 
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
@@ -9,11 +10,16 @@ from fastapi import HTTPException, status
 from dotenv import load_dotenv
 
 from app.api_generation import project_crud
+from app.minIO import dependencies as minio_dependencies
+from app.chroma import crud as chroma_crud
 
 load_dotenv()
 SECRET_KEY=os.environ.get('API_KEY_SECRET')
 ALGORITHM="HS256"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+HISTORY_DIR = os.path.join(CURRENT_DIR, '..', 'chatbot', 'history')
 
 
 def verify_api_key(db: Session, api_key: str):
@@ -67,9 +73,26 @@ def get_all_projects(db: Session, user_id: int):
     return project_records
 
 
-def delete_project(db: Session, project_id: int):
+def delete_project(db: Session, user, project_id: int):
     try:
-        project_crud.delete_project(db, project_id)
+        project_record = get_project_detail(db, project_id)
+        history_file_name = str(project_record.id)+'@'+str(project_record.project_name)+'_history'
+        history_json_file_name = history_file_name+'.json'
+        history_file_name_dir = os.path.join(HISTORY_DIR, "json", history_json_file_name)
+        
+        if os.path.exists(history_file_name_dir):
+            os.remove(history_file_name_dir)
+        
+        minio_dependencies.delete_file_from_minIO(project_record.project_name.lower(), history_file_name)
+
+        external_list = project_crud.get_all_external_session_by_project_id(db, project_record.id)
+        for external_session in external_list:
+            print("external session id : ", external_session.get('id'))
+            delete_external_session(db, project_record.id, project_record.project_name, external_session.get('id'))
+            
+        chroma_crud.delete_external_file_by_project_id(db, project_record.id)
+        project_crud.delete_project(db, project_record.id)
+        
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -104,11 +127,18 @@ def get_all_external_files(db: Session, project_id: int):
 def create_external_session(db: Session, project_id: int):
     try:
         session = str(uuid.uuid4())
-        session_record = project_crud.get_external_session_by_session_id(db, session)
+        session_record = project_crud.get_external_session_by_session(db, session)
+        
+        project_record = get_project_detail(db, project_id)
+        if project_record is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Project not found"
+            )
         
         while session_record is not None:
             session = str(uuid.uuid4())
-            session_record = project_crud.get_external_session_by_session_id(db, session)
+            session_record = project_crud.get_external_session_by_session(db, session)
             print("create session")
             
         external_session_record = project_crud.create_external_session(db, project_id, session)
@@ -131,15 +161,135 @@ def get_all_session(db: Session, project_id=int):
         )
     
 
-def delete_external_session(db: Session, project_id: int, session_id: int):
+def delete_external_session(db: Session, project_id, project_name, external_session_id: int):
     try:
+        print("project id : ",  project_id)
         """verify project if available"""
-        get_project_detail(db, project_id)
-        project_crud.delete_external_session(db, session_id)
+        project_record = get_project_detail(db, project_id)
+        if project_record is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"REST-API-KEY doesn't have {external_session_id}."
+            )
+            
+        external_session_record = project_crud.get_external_session_by_session_id(db, external_session_id)
+        if external_session_record is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"REST-API-KEY doesn't have {external_session_id}. Delete failed."
+            )
+        
+        external_history_record = project_crud.get_external_history_by_session_id(db, external_session_id)
+        
+        if external_history_record is None:
+            deleted_external_session = project_crud.delete_external_session(db, external_session_id, project_id)
+            if deleted_external_session == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Delete failed."
+                )
+        
+        else:
+            
+            external_history_json_file = external_history_record.history_name+'.json'
+            external_history_json_file_dir = os.path.join(HISTORY_DIR, "json", external_history_json_file)
+            
+            if os.path.exists(external_history_json_file_dir):
+                os.remove(external_history_json_file_dir)
+                
+            """delete from minIO"""
+            minio_dependencies.delete_file_from_minIO(project_name.lower(), external_history_record.history_name)
+                
+
+            project_crud.delete_external_history(db, external_session_id)
+                
+            deleted_external_session = project_crud.delete_external_session(db, external_session_id)
+            if deleted_external_session == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Delete failed."
+                )
+            
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
 
+
+def is_external_session_available(db: Session, project_id: int):
+    session_record = project_crud.get_external_session_by_session_id(db, project_id)
+    if session_record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found"
+        )
+
+def create_external_history(db: Session, history_name: str, session_id:int):
+    try:
+        external_history_record = project_crud.insert_external_history(db, history_name, session_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    return external_history_record
+        
+def is_external_history_exist(db: Session, session_id: int):
+    history_record = project_crud.get_external_history_by_session_id(db, session_id)
+    return history_record
+
+def save_external_session(db: Session, external_session_id: int, project_name: str):
+    try:
+        history_filename = str(external_session_id)+'@'+project_name+'_history'
+        
+        history_record = project_crud.get_external_history_by_session_id(db, external_session_id)
+        
+        """declare file variables"""
+        history_json_file = history_record.history_name+'.json'
+        
+        history_json_file_dir = os.path.join(HISTORY_DIR, "json", history_json_file)
+        if not os.path.exists(history_json_file_dir):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="History Directory not found"
+            )
+        
+        minio_dependencies.upload_file(project_name.lower(), history_json_file, history_json_file_dir)
+        
+        os.remove(history_json_file_dir)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+        
+        
+        
+def get_history_by_external_session_id(db: Session, project, external_session_id: int, limit, page):
+    try:
+        external_history = is_external_history_exist(db, external_session_id)
+        if external_history is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="History not found"
+            )
+        history_json_filename = external_history.history_name+'.json'
+        history_json_filename_dir = os.path.join(HISTORY_DIR, "json", history_json_filename)
+        
+        if not os.path.exists(history_json_filename_dir):
+            print("history file not found, downloading from minIO", history_json_filename_dir)
+            minio_dependencies.download_file(project.project_name.lower(), history_json_filename, history_json_filename_dir)
+
+        if os.path.exists(history_json_filename_dir):    
+            with open(history_json_filename_dir, 'r') as json_file:
+                docs = json.load(json_file)
+                chat_history = docs
+        return chat_history[-(page*limit):]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        ) 
     

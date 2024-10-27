@@ -57,6 +57,14 @@ class Session(Base):
     message_history = relationship("MessageHistory", back_populates="session")
     file_metadata = relationship("FileMetadata", back_populates="session")
     
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "session": str(self.session),
+            "created_at": self.created_at.isoformat(),
+        }
+        
 class MessageHistory(Base):
     __tablename__ = "message_histories"
     __table_args__ = {'schema': 'public'}  # Specify schema
@@ -67,6 +75,14 @@ class MessageHistory(Base):
     created_at = Column(DateTime, default=datetime.now)
     
     session = relationship("Session", back_populates="message_history")
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "history_name": self.history_name,
+            "created_at": self.created_at.isoformat(),
+        }
     
 class FileMetadata(Base):
     __tablename__ = "file_metadata"
@@ -97,7 +113,6 @@ class ModelProvider(Base):
     provider_name = Column(String, nullable=False)
     
     model = relationship("Model", back_populates="provider")
-    model_customization = relationship("ModelCustomization", back_populates="provider")
     
 class Model(Base):
     __tablename__ = "models"
@@ -108,6 +123,7 @@ class Model(Base):
     model_name = Column(String, nullable=False)
     
     provider = relationship("ModelProvider", back_populates="model")
+    model_customization = relationship("ModelCustomization", back_populates="model")
     
 class ModelCustomization(Base):
     __tablename__ = "model_customizations"
@@ -115,14 +131,32 @@ class ModelCustomization(Base):
     
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("public.users.id"))
-    provider_id = Column(Integer, ForeignKey("public.model_providers.id"))
+    model_id = Column(Integer, ForeignKey("public.models.id"))
     provider_api_key = Column(String)
     temperature = Column(Integer)
     max_token = Column(Integer)
     created_at = Column(DateTime, default=datetime.now)
     
     user = relationship("User", back_populates="model_customization")
-    provider = relationship("ModelProvider", back_populates="model_customization")
+    model = relationship("Model", back_populates="model_customization")
+    
+    def to_dict(self):
+        provider_info = {
+            "model_id": self.model.id,
+            "model_name": self.model.model_name,  # Adjust based on actual fields in `ModelProvider`
+            "provider_id": self.model.provider_id,  # Adjust based on actual fields in `ModelProvider`
+        } if self.model else {}
+
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "model_id": self.model_id,
+            "provider_api_key": self.provider_api_key,
+            "temperature": self.temperature,
+            "max_token": self.max_token,
+            "created_at": self.created_at.isoformat(),
+            "provider_info": provider_info,
+        }
     
 class Project(Base):
     __tablename__ = "projects"
@@ -201,3 +235,11 @@ class ExternalHistory(Base):
     created_at = Column(DateTime, default=datetime.now)
     
     session = relationship("ExternalSession", back_populates="external_history")
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "history_name": self.history_name,
+            "created_at": self.created_at.isoformat(),
+        }

@@ -10,15 +10,20 @@ from app.db_connection.models import Base
 from fastapi.middleware.cors import CORSMiddleware
 from app.chatbot.chain import chain
 from app.chatbot.suggestionQ_chain import llm_chain
+from app.chatbot.project_chain import chain as external_chain
+from app.chatbot.hrd_chain import chain as conversational_rag_chain
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
+from app.auth.dependencies import get_current_active_user
 from app.auth.routes import router as auth_routes
 from app.session.routes import router as session_routes
 from app.chroma.routes import router as chroma_routes
 from app.api_generation.routes import router as api_generation_routes
+from app.api_generation.routes import verify_api_key
+from app.model_provider.routes import router as model_provider_routes
 
 app = FastAPI(
     title="Chroma API",
@@ -41,18 +46,40 @@ app.include_router(auth_routes, prefix="/api/v1")
 app.include_router(session_routes, prefix="/api/v1")
 app.include_router(chroma_routes, prefix="/api/v1")
 app.include_router(api_generation_routes, prefix="/api/v1")
+app.include_router(model_provider_routes, prefix="/api/v1")
 
 """require manually write history"""
+
+"file can be null for chatting with all documents"
 add_routes(
     app,
     chain,
-    path="/chatbot"
+    path="/chatbot",
+    enabled_endpoints=["invoke"],
+    dependencies=[Depends(get_current_active_user)]
 )
 
 add_routes(
     app,
     llm_chain,
-    path="/suggestion_chatbot"
+    path="/suggestion_chatbot",
+    enabled_endpoints=["invoke"],
+    dependencies=[Depends(get_current_active_user)],
+)
+
+add_routes(
+    app,
+    external_chain,
+    path="/external_chain",
+    enabled_endpoints=["invoke"],
+    dependencies=[Depends(verify_api_key)]
+)
+
+add_routes(
+    app,
+    conversational_rag_chain,
+    path="/hrd_chain",
+    enabled_endpoints=["invoke"],
 )
 
 @app.exception_handler(RequestValidationError)

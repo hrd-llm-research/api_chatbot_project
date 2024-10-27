@@ -21,8 +21,8 @@ def get_file_by_file_id(db: Session, file_id: int):
     
     return file_record
 
-def get_all_files(db: Session, session_id: int, user_id: int):
-    file_records = db.query(FileMetadata).filter(FileMetadata.session_id == session_id and FileMetadata.user_id == user_id).all()
+def get_all_files(db: Session, session_id: int):
+    file_records = db.query(FileMetadata).filter(FileMetadata.session_id == session_id).all()
 
     file_records_dict = [file_record.to_dict() for file_record in file_records]
     
@@ -39,3 +39,14 @@ def create_external_file(db: Session, project_id: int, file_name: str):
     db.refresh(file_data)
     
     return file_data
+
+def delete_file(db: Session, file_id: int):
+    return db.query(FileMetadata).filter(FileMetadata.id == file_id).delete()
+
+def delete_file_by_session_id(db: Session, session_id: int):
+    return db.query(FileMetadata).filter(FileMetadata.session_id == session_id).delete()
+
+
+def delete_external_file_by_project_id(db: Session, project_id: int):
+    db.query(ExternalFile).filter(ExternalFile.project_id == project_id).delete()
+    db.commit()
