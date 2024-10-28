@@ -5,6 +5,7 @@ from app.model_provider import crud
 from fastapi import HTTPException, status
 from app.model_provider import routes
 from langchain_groq import ChatGroq
+from langchain_community.llms import OpenAI
 
 def update_llm(db: Session, request: ModelCustomizationCreate, user):
     try:
@@ -34,6 +35,7 @@ def is_lm_available(db: Session, user_id:int):
 def get_llm(db:Session, user):
     try:
         llm_record = crud.get_llm_by_user_id(db, user.id)
+        
         return llm_record
     except Exception as e:
         raise HTTPException(
@@ -45,11 +47,18 @@ def get_lm_from_cache(user_id):
     try:
         print("lm cache: ", routes.llm_cache)
         lm = routes.llm_cache[user_id]
-        llm = ChatGroq(
-            model=lm['provider_info']['model_name'],
-            temperature=lm['temperature'],
-            api_key=lm['provider_api_key']
-        )
+        if lm['provider_info']['provider_id'] == 1:
+            llm = ChatGroq(
+                model=lm['provider_info']['model_name'],
+                temperature=lm['temperature'],
+                api_key=lm['provider_api_key']
+            )
+        elif lm['provider_info']['provider_id'] == 2:
+            llm = OpenAI(
+                model=lm['provider_info']['model_name'],
+                temperature=lm['temperature'],
+                api_key=lm['provider_api_key']
+            )
         return llm
     except Exception as e:
         raise HTTPException(
@@ -57,4 +66,12 @@ def get_lm_from_cache(user_id):
             detail=str(e)
         )
     
-    
+def get_all_models(db: Session):
+    try:
+        models = crud.get_models(db)
+        return models
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

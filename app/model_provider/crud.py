@@ -33,3 +33,8 @@ def update_customed_model(db: Session, user_id: int, request):
 def get_llm_by_user_id(db: Session, user_id: int):
     llm_record = db.query(ModelCustomization).filter(ModelCustomization.user_id == user_id).first()
     return llm_record
+
+def get_models(db: Session):
+    models = db.query(Model).all()
+    model_lists = [model.to_dict() for model in models]
+    return model_lists

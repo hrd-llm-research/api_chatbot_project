@@ -36,17 +36,49 @@ async def get_llm(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
 ):
+    DEFAULT_LM = {
+        "provider_api_key": "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",
+        "temperature": 0,
+        "max_token": 1000,
+        "created_at": "2024-10-25T00:04:25.399377",
+        "provider_info": {
+            "model_id": 1,
+            "model_name": "Llama3-8b-8192",
+            "provider_id": 1
+        }
+    }
     user = validate_existing_email(db, current_user.email)
     llm_record = dependencies.get_llm(db, user)
-    llm_cache[user.id] = llm_record.to_dict()
-    print("llm cache: ", llm_cache)
-    return JSONResponse(
+    if not llm_record is None:
+        llm_cache[user.id] = llm_record.to_dict()
+        return JSONResponse(
         status_code=200,
         content={"message": "LLM retrieved successfully.",
                  "success": True,
-                 "llm_id": llm_record.to_dict()}
+                 "payload": llm_record.to_dict()}
+    )
+    else: 
+        llm_cache[user.id] = DEFAULT_LM
+        return JSONResponse(
+        status_code=200,
+        content={"message": "LLM retrieved successfully.",
+                 "success": True,
+                 "payload": DEFAULT_LM}
     )
 
 
+@router.get("/all__models")
+async def get_all_models(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+):
+    user = validate_existing_email(db, current_user.email)
+    model = dependencies.get_all_models(db)
+    return JSONResponse(
+        status_code=200,
+        content={"message": "All models retrieved successfully.",
+                 "success": True,
+                 "models": model}
+    )
 
 

@@ -125,6 +125,19 @@ class Model(Base):
     provider = relationship("ModelProvider", back_populates="model")
     model_customization = relationship("ModelCustomization", back_populates="model")
     
+    def to_dict(self):
+        provider_info = {
+            "provider_id": self.provider.id,
+            "provider_name": self.provider.provider_name,
+        } if self.provider else {}
+        
+        return {
+            "id": self.id,
+            "provider_id": self.provider_id,
+            "model_name": self.model_name,
+            "provider_info": provider_info
+        }
+    
 class ModelCustomization(Base):
     __tablename__ = "model_customizations"
     __table_args__ = {'schema': 'public'}  # Specify schema

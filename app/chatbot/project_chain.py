@@ -96,15 +96,20 @@ class CreateRAGChainRunnable(Runnable):
         """Check if project & session available"""
         session_data = is_external_session_available(db, session_id)
         project_data = get_project_by_project_id(db, project_id)
+        
+        if project_data is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Project '{project_id}' is not found."
+            )
         chroma_db = get_external_chroma_name(project_id)
         external_history = is_external_history_exist(db, session_id)
+    
         
         """declare file variables"""
         history_filename = str(session_id)+'@'+project_data.project_name+'_history'
-        # history_text_file = history_filename+'.txt'
         history_json_file = history_filename+'.json'
         
-        # history_text_file_dir = os.path.join(history_dir, "txt", history_text_file)
         history_json_file_dir = os.path.join(history_dir, "json", history_json_file)
         persistent_dir = os.path.join(current_dir, "..", "chroma", "chroma_db", chroma_db)
                 

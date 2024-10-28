@@ -30,10 +30,10 @@ load_dotenv()
 # Create embeddings without GPU
 embeddings = FastEmbedEmbeddings()
 
-llm = ChatGroq(
-    model=os.environ.get('OPENAI_MODEL_NAME'),
-    temperature=1,
-)
+# llm = ChatGroq(
+#     model=os.environ.get('OPENAI_MODEL_NAME'),
+#     temperature=1,
+# )
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 history_dir = os.path.join(current_dir, 'history')
@@ -82,6 +82,7 @@ qa_prompt = ChatPromptTemplate.from_messages(
         ]
     )
 
+
 class CreateRAGChainRunnable(Runnable):
     
     def invoke(self, inputs: dict, *args, **kwargs):
@@ -92,7 +93,7 @@ class CreateRAGChainRunnable(Runnable):
         user_id = inputs.get("user_id") 
         session_id = inputs.get("session_id")
         file_id = inputs.get("file_id")
-        
+        print("creating")
         
         """declare variables"""
         session_record = session_dependencies.is_session_available_by_session_id(db, user_id, session_id)
@@ -159,7 +160,7 @@ class CreateRAGChainRunnable(Runnable):
                 "score_threshold":0.2
             }
         )
-        # self.llm = get_lm_from_cache(user_id)
+        llm = get_lm_from_cache(user_id)
         retrieved_docs = RunnableBranch(
             (
                 # Both empty string and empty list evaluate to False
@@ -187,12 +188,17 @@ class CreateRAGChainRunnable(Runnable):
         return {
             "input": question,
             "context": contextual,
-            "chat_history": chat_history,
-            "history_filename": history_file_name
+            "chat_history": chat_history[-6:],
+            "history_filename": history_file_name,
+            "llm": llm,
         }
-qa_branch = (
-    qa_prompt | llm | StrOutputParser()
-)
+    
+def create_qa_branch(llm):
+    return qa_prompt | llm | StrOutputParser()
+    
+# qa_branch = (
+#     qa_prompt | llm | StrOutputParser()
+# )
 
 def combine_chain(qa, history_filename):
     try:
@@ -218,9 +224,10 @@ chain = RunnableSequence(
         "input":x['input'],
         "context":x['context'],
         "chat_history":x['chat_history'],
-        "history_filename":x['history_filename']
+        "history_filename":x['history_filename'],
+        "llm": x['llm'],
     })
-    | RunnableParallel(branches={"qa":qa_branch, "history_filename": (lambda x: x['history_filename'])})
+    | RunnableParallel(branches={"qa": lambda x: create_qa_branch(x['llm']), "history_filename": (lambda x: x['history_filename'])})
     | RunnableLambda(lambda x: combine_chain(x['branches']['qa'], x['branches']['history_filename']))
 )
     
