@@ -26,6 +26,7 @@ load_dotenv()
 embedding = FastEmbedEmbeddings()
 
 def _store_file(file: UploadFile, upload_dir: str) -> str:
+    
     file_path = os.path.join(upload_dir, file.filename)
     with open(file_path, 'wb') as f:
         f.write(file.file.read())
@@ -107,6 +108,9 @@ def upload_file_to_chroma(db: Session, file, user, session):
         store file upload
         """
         print("filename: ",file.filename)
+        if not os.path.exists(UPLOAD_DIR):
+            os.mkdir(UPLOAD_DIR)
+            
         file_name = _store_file(file, UPLOAD_DIR)
         
         chunks = create_chunk(file_name)

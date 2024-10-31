@@ -16,10 +16,10 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.now)
     is_active = Column(Boolean, default=False)
     
-    session = relationship("Session", back_populates="user")
-    opt = relationship("Opt", back_populates="user")
-    project = relationship("Project", back_populates="user")
-    model_customization = relationship("ModelCustomization", back_populates="user")
+    session = relationship("Session", back_populates="user", cascade="all, delete")
+    opt = relationship("Opt", back_populates="user", cascade="all, delete")
+    project = relationship("Project", back_populates="user", cascade="all, delete")
+    model_customization = relationship("ModelCustomization", back_populates="user", cascade="all, delete")
     
     def to_dict(self):
         return {
@@ -42,7 +42,7 @@ class Opt(Base):
     created_at = Column(DateTime, default=datetime.now)
     expired_at = Column(DateTime, default=lambda: datetime.now() + timedelta(minutes=1))
     
-    user = relationship("User", back_populates="opt")
+    user = relationship("User", back_populates="opt", cascade="all, delete")
     
 class Session(Base):
     __tablename__ = "sessions"
@@ -53,9 +53,9 @@ class Session(Base):
     session = Column(UUID(as_uuid=True))
     created_at = Column(DateTime, default=datetime.now)
     
-    user = relationship("User", back_populates="session")
-    message_history = relationship("MessageHistory", back_populates="session")
-    file_metadata = relationship("FileMetadata", back_populates="session")
+    user = relationship("User", back_populates="session", cascade="all, delete")
+    message_history = relationship("MessageHistory", back_populates="session", cascade="all, delete")
+    file_metadata = relationship("FileMetadata", back_populates="session", cascade="all, delete")
     
     def to_dict(self):
         return {
@@ -74,7 +74,7 @@ class MessageHistory(Base):
     history_name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     
-    session = relationship("Session", back_populates="message_history")
+    session = relationship("Session", back_populates="message_history", cascade="all, delete")
     
     def to_dict(self):
         return {
@@ -94,7 +94,7 @@ class FileMetadata(Base):
     file_name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     
-    session = relationship("Session", back_populates="file_metadata")
+    session = relationship("Session", back_populates="file_metadata", cascade="all, delete")
     
     def to_dict(self):
         return {
@@ -112,7 +112,7 @@ class ModelProvider(Base):
     id = Column(Integer, primary_key=True)
     provider_name = Column(String, nullable=False)
     
-    model = relationship("Model", back_populates="provider")
+    model = relationship("Model", back_populates="provider", cascade="all, delete")
     
 class Model(Base):
     __tablename__ = "models"
@@ -122,8 +122,8 @@ class Model(Base):
     provider_id = Column(Integer, ForeignKey("public.model_providers.id"))
     model_name = Column(String, nullable=False)
     
-    provider = relationship("ModelProvider", back_populates="model")
-    model_customization = relationship("ModelCustomization", back_populates="model")
+    provider = relationship("ModelProvider", back_populates="model", cascade="all, delete")
+    model_customization = relationship("ModelCustomization", back_populates="model", cascade="all, delete")
     
     def to_dict(self):
         provider_info = {
@@ -150,8 +150,8 @@ class ModelCustomization(Base):
     max_token = Column(Integer)
     created_at = Column(DateTime, default=datetime.now)
     
-    user = relationship("User", back_populates="model_customization")
-    model = relationship("Model", back_populates="model_customization")
+    user = relationship("User", back_populates="model_customization", cascade="all, delete")
+    model = relationship("Model", back_populates="model_customization", cascade="all, delete")
     
     def to_dict(self):
         provider_info = {
@@ -183,9 +183,9 @@ class Project(Base):
     chroma_name = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     
-    user = relationship("User", back_populates="project")
-    external_session = relationship("ExternalSession", back_populates="project")   
-    external_file = relationship("ExternalFile", back_populates="project")
+    user = relationship("User", back_populates="project", cascade="all, delete")
+    external_session = relationship("ExternalSession", back_populates="project", cascade="all, delete")   
+    external_file = relationship("ExternalFile", back_populates="project", cascade="all, delete")
     
     def to_dict(self):
         return {
@@ -208,8 +208,8 @@ class ExternalSession(Base):
     session = Column(UUID(as_uuid=True))
     created_at = Column(DateTime, default=datetime.now)
     
-    project = relationship("Project", back_populates="external_session")
-    external_history = relationship("ExternalHistory", back_populates="session")
+    project = relationship("Project", back_populates="external_session", cascade="all, delete")
+    external_history = relationship("ExternalHistory", back_populates="session", cascade="all, delete")
     
     def to_dict(self):
         return {
@@ -228,7 +228,7 @@ class ExternalFile(Base):
     file_name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     
-    project = relationship("Project", back_populates="external_file")
+    project = relationship("Project", back_populates="external_file", cascade="all, delete")
     
     def to_dict(self):
         return {
@@ -247,7 +247,7 @@ class ExternalHistory(Base):
     history_name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     
-    session = relationship("ExternalSession", back_populates="external_history")
+    session = relationship("ExternalSession", back_populates="external_history", cascade="all, delete")
     
     def to_dict(self):
         return {
