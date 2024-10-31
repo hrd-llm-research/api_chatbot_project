@@ -203,7 +203,7 @@ def delete_external_session(db: Session, project_id, project_name, external_sess
 
             project_crud.delete_external_history(db, external_session_id)
                 
-            deleted_external_session = project_crud.delete_external_session(db, external_session_id)
+            deleted_external_session = project_crud.delete_external_session(db, external_session_id, project_id)
             if deleted_external_session == 0:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
