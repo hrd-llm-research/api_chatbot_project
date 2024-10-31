@@ -26,7 +26,8 @@ load_dotenv()
 embedding = FastEmbedEmbeddings()
 
 def _store_file(file: UploadFile, upload_dir: str) -> str:
-    
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
     file_path = os.path.join(upload_dir, file.filename)
     with open(file_path, 'wb') as f:
         f.write(file.file.read())
