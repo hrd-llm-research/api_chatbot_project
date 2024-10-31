@@ -34,7 +34,7 @@ def is_session_available(db: Session, user_id: int, session):
 
 def is_session_available_by_session_id(db: Session, user_id: int, session_id: int):
     session_record = crud.find_session_by_session_id(db,session_id)
-    if session_record is False:
+    if session_record is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found"

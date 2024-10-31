@@ -22,7 +22,7 @@ def write_history_as_json(file_path, message_list):
     """Format list of histories with type and content."""
     message_list = [{"role": "user" if isinstance(message, HumanMessage) else "ai","content": message.content} for message in message_list]
     
-    if os.path.exists(file_path):
+    if not os.path.exists(file_path):
         os.mkdir(file_path)
     
     """Check if the file exists and has valid content, otherwise initialize an empty list"""

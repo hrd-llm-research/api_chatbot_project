@@ -107,7 +107,6 @@ def upload_file_to_chroma(db: Session, file, user, session):
         """
         store file upload
         """
-        print("filename: ",file.filename)
         if not os.path.exists(UPLOAD_DIR):
             os.mkdir(UPLOAD_DIR)
             

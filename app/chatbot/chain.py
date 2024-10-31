@@ -97,6 +97,8 @@ class CreateRAGChainRunnable(Runnable):
         
         """declare variables"""
         session_record = session_dependencies.is_session_available_by_session_id(db, user_id, session_id)
+        # session_record = session_record.to_dict()
+        print("session_record: ",session_record)
         if file_id is not None:
             file_record = is_file_available(db, file_id)
             collection_name = file_record.collection_name  
@@ -212,10 +214,10 @@ def combine_chain(qa, history_filename):
             
         write_history_as_json(history_json_file_dir, new_history)
         return qa
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while executing the RAG chain."
+            detail=str(e)
         )
 
 chain = RunnableSequence(
