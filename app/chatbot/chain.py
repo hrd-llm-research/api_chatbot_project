@@ -163,6 +163,11 @@ class CreateRAGChainRunnable(Runnable):
             }
         )
         llm = get_lm_from_cache(user_id)
+        if llm is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No llm found. Please use /api/v1/model_provider/llm to get your llm."
+            )
         retrieved_docs = RunnableBranch(
             (
                 # Both empty string and empty list evaluate to False

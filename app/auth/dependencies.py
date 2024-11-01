@@ -95,7 +95,7 @@ async def get_current_active_user(
 
 def generate_opt(db: Session, user_id:int) -> None:
     try: 
-        random_number = random.randint(000000, 999999)
+        random_number = random.randint(100001, 999999)
         crud.create_opt(db, user_id, random_number)
         return random_number
     
