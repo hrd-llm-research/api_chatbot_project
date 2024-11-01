@@ -62,14 +62,30 @@ async def reset_password(
         }
     )
 
-@router.post("/code-verify")
-async def code_verify(
+@router.post("/account-verify")
+async def account_verify(
     code: str = Query("000000",min_length=6, max_length=6),
     email: str = Query("example@example.com", description="User's email"),  
     db: Session = Depends(get_db)
 ):
     user = dependencies.validate_existing_email(db, email)
     is_true = dependencies.verify_account(db, code, user)
+    
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"message": "Account is verified.",
+                 "success": is_true,
+        }
+    )
+    
+@router.post("/code-verify")
+async def verify_code(
+    code: str = Query("000000",min_length=6, max_length=6),
+    email: str = Query("example@example.com", description="User's email"),  
+    db: Session = Depends(get_db)
+):
+    user = dependencies.validate_existing_email(db, email)
+    is_true = dependencies.verify_code(db, code, user)
     
     return JSONResponse(
         status_code=status.HTTP_200_OK,

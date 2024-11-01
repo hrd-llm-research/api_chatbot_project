@@ -124,6 +124,23 @@ def verify_account(db: Session, code: str, user):
         detail="Invalid code or expired"
     )
 
+def verify_code(db: Session, code: str, user):
+    try:
+        current_date = datetime.now()
+        opt = crud.get_code_by_userId(db, user.id)
+    
+        if opt.code == code and current_date < opt.expired_at:
+            return True
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid code or expired"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
         
 def validate_existing_email(db:Session, email: str):
     user = crud.get_user_by_email(db, email)
