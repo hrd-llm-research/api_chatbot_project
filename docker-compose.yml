@@ -28,8 +28,8 @@ services:
 
   fastapi:
     build:
-      context: ./fastapi
-    container_name: fastapi
+      context: .
+    container_name: chatbot_api
     environment:
       DATABASE_URL: postgresql://postgres:123@postgres:6000/chatbot_project_api2
       MINIO_ENDPOINT: http://minio:9000
