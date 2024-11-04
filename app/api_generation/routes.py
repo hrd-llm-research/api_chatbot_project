@@ -73,9 +73,6 @@ def create_project(
     project_name: str = Query(...),
     db: Session = Depends(get_db)
 ):
-    print(
-        "project name",project_name
-    )
     user = validate_existing_email(db, current_user.email)
     project_record = project_dependencies.create_project(db, project_name, user)
     return JSONResponse(

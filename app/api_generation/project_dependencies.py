@@ -14,7 +14,8 @@ from app.minIO import dependencies as minio_dependencies
 from app.chroma import crud as chroma_crud
 
 load_dotenv()
-SECRET_KEY=os.environ.get('API_KEY_SECRET')
+# SECRET_KEY=os.environ.get('API_KEY_SECRET')
+SECRET_KEY = "21d7c112103f59812997858795276d45507c204f893922b0dcd251eb76013d12"
 ALGORITHM="HS256"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -23,13 +24,15 @@ HISTORY_DIR = os.path.join(CURRENT_DIR, '..', 'chatbot', 'history')
 
 
 def verify_api_key(db: Session, api_key: str):
+    
     api_key_record = project_crud.get_api_key(db, api_key)
     if api_key_record is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API key"
         )
-    return api_key_record
+        api_key = api_key_record.to_dict()
+    return api_key.api_key
 
 def get_project_detail(db: Session, project_id: int):
     project_record = project_crud.get_project_by_project_id(db, project_id)
@@ -41,14 +44,20 @@ def get_project_detail(db: Session, project_id: int):
     return project_record
 
 def generate_api_key(project_name, email: str):
-    data = {
-        "project_name": project_name,
-        "email": email
-    }
-    to_encode = data.copy()
-    ALGORITHM = "HS256" 
-    api_key = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return api_key
+    try: 
+        data = {
+            "project_name": project_name,
+            "email": email
+        }
+        to_encode = data.copy()
+        ALGORITHM = "HS256" 
+        api_key = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        return api_key
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="api key generation error"
+        )
 
     
 def create_project(db: Session, project_name: str, user):
