@@ -58,7 +58,6 @@ def save_internal_session(db: Session, user, session_id: int):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="History not found"
             )
-        # print("history name", history_record.history_name)
         """declare file variables"""
         # history_text_file = history_record.history_name+'.txt'
         history_json_file = history_record.history_name +'.json'

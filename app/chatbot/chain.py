@@ -93,12 +93,10 @@ class CreateRAGChainRunnable(Runnable):
         user_id = inputs.get("user_id") 
         session_id = inputs.get("session_id")
         file_id = inputs.get("file_id")
-        print("creating")
         
         """declare variables"""
         session_record = session_dependencies.is_session_available_by_session_id(db, user_id, session_id)
         # session_record = session_record.to_dict()
-        print("session_record: ",session_record)
         if file_id is not None:
             file_record = is_file_available(db, file_id)
             collection_name = file_record.collection_name  

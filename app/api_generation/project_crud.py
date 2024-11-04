@@ -3,7 +3,6 @@ from app.db_connection import models
 from app.api_generation import project_dependencies
 
 def insert_project(db: Session, project_name, user_id: int, api_key):
-    print("project name in crud: ", project_name)
     project_data = models.Project(
             user_id=user_id,
             project_name=project_name,

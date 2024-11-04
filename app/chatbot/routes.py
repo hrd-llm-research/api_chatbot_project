@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
-from project_chain import chain
+from app.chatbot.project_chain import chain
 from app.db_connection.schemas import ExternalChatbotSchema
 from app.api_generation.routes import verify_api_key
 
@@ -10,8 +10,7 @@ router = APIRouter(
 )
 
 @router.post("/external_chatbot/invoke")
-async def invoke_chain(request_data: ExternalChatbotSchema, project: str = Depends(verify_api_key)):
-    request = await request_data.json()
+async def invoke_chain(request: ExternalChatbotSchema, project: str = Depends(verify_api_key)):
     response = await chain.invoke({
           "input": {
                 "input": request.input,
@@ -19,7 +18,6 @@ async def invoke_chain(request_data: ExternalChatbotSchema, project: str = Depen
                 "project_id": request.project_id
         }
     })
-    print("response: ", response)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
                 content={"message": "Project retrieved successfully.",

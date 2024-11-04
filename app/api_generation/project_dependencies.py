@@ -26,7 +26,6 @@ HISTORY_DIR = os.path.join(CURRENT_DIR, '..', 'chatbot', 'history')
 def verify_api_key(db: Session, api_key: str):
     
     api_key_record = project_crud.get_api_key(db, api_key)
-    print("apikey in dependency: ",api_key_record.to_dict())
     if api_key_record is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -97,7 +96,6 @@ def delete_project(db: Session, user, project_id: int):
 
         external_list = project_crud.get_all_external_session_by_project_id(db, project_record.id)
         for external_session in external_list:
-            print("external session id : ", external_session.get('id'))
             delete_external_session(db, project_record.id, project_record.project_name, external_session.get('id'))
             
         chroma_crud.delete_external_file_by_project_id(db, project_record.id)
@@ -113,7 +111,6 @@ def delete_project(db: Session, user, project_id: int):
 
 def update_project_description(db: Session, project_id: int,project_description: str):
     try:
-        print("description : ", project_description)
         project_record = project_crud.update_description(db, project_id,project_description)
     except Exception as e:
         raise HTTPException(
@@ -149,7 +146,6 @@ def create_external_session(db: Session, project_id: int):
         while session_record is not None:
             session = str(uuid.uuid4())
             session_record = project_crud.get_external_session_by_session(db, session)
-            print("create session")
             
         external_session_record = project_crud.create_external_session(db, project_id, session)
         return external_session_record
@@ -173,7 +169,6 @@ def get_all_session(db: Session, project_id=int):
 
 def delete_external_session(db: Session, project_id, project_name, external_session_id: int):
     try:
-        print("project id : ",  project_id)
         """verify project if available"""
         project_record = get_project_detail(db, project_id)
         if project_record is None:
@@ -289,7 +284,6 @@ def get_history_by_external_session_id(db: Session, project, external_session_id
         history_json_filename_dir = os.path.join(HISTORY_DIR, "json", history_json_filename)
         
         if not os.path.exists(history_json_filename_dir):
-            print("history file not found, downloading from minIO", history_json_filename_dir)
             minio_dependencies.download_file(project.project_name.lower(), history_json_filename, history_json_filename_dir)
 
         if os.path.exists(history_json_filename_dir):    

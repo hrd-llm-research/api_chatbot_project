@@ -89,13 +89,11 @@ class CreateRAGChainRunnable(Runnable):
     def invoke(self, inputs: dict, *args, **kwargs):
         db = SessionLocal()
         
-        print("REST-API-KEY: ", inputs)
-        
         """declare variables from inputs"""
-        question = inputs.get("input")
-        session_id = inputs.get("external_session_id")
-        project_id = inputs.get("project_id")
-
+        question = inputs.get('input')
+        session_id = inputs.get('external_session_id')
+        project_id = inputs.get('project_id')
+        
         """Check if project & session available"""
         session_data = is_external_session_available(db, session_id)
         project_data = get_project_by_project_id(db, project_id)

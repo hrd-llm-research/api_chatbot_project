@@ -95,7 +95,6 @@ class HRDBotRAGChain(Runnable):
         """
         session_id = inputs.get("session_id")
         user_input = inputs.get("input")
-        print("hello")
         
         # Initialize vector store and retriever
         vector_store = Chroma(

@@ -154,7 +154,6 @@ def delete_session(
     db: Session = Depends(get_db),
     project: str = Depends(verify_api_key)
 ):
-    print("project from routes: ", project.id)
     project_dependencies.delete_external_session(db, project.id, project.project_name, external_session_id)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
