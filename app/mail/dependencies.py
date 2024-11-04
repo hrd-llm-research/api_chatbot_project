@@ -7,8 +7,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-PASSWORD = os.environ.get('MAIL_PASSWORD')
-EMAIL = os.environ.get('MAIL_SENDER')
+# PASSWORD = os.environ.get('MAIL_PASSWORD')
+# EMAIL = os.environ.get('MAIL_SENDER')
+
+PASSWORD = "ngtlatwsrywvauwh"
+EMAIL = "heangs770@gmail.com"
 
 def send_mail(email_receiver: str, subject: str, message: str):
     em = EmailMessage()

@@ -32,15 +32,15 @@ services:
     container_name: chatbot_api
     environment:
       DATABASE_URL: postgresql://postgres:123@postgres:6000/chatbot_project_api2
-      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ENDPOINT: 110.74.194.123:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
     depends_on:
       - postgres
       - minio
     ports:
-      - "8000:8000"
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      - "9080:8000"
+    command: uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
   postgres_data:

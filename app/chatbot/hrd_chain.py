@@ -22,10 +22,10 @@ load_dotenv()
 embeddings = FastEmbedEmbeddings()
 
 llm = ChatGroq(
-    model=os.environ.get('OPENAI_MODEL_NAME'),
+    model="Llama3-8b-8192",
     temperature=1,
+    api_key="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"
 )
-
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 history_dir = os.path.join(current_dir, 'history')

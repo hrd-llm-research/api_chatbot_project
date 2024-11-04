@@ -8,9 +8,9 @@ import os
 load_dotenv()
 
 minio_client = Minio(
-    endpoint=os.environ.get("MINIO_ENDPOINT"),
-    access_key=os.environ.get("MINIO_ACCESS_KEY"),
-    secret_key=os.environ.get("MINIO_SECRET_KEY"),
+    endpoint="110.74.194.123:9000",
+    access_key="minioadmin",
+    secret_key="minioadmin",
     secure=False # Set to True if you have configured TLS/SSL
 )
 
