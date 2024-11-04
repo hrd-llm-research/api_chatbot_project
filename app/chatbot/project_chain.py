@@ -89,7 +89,7 @@ class CreateRAGChainRunnable(Runnable):
     def invoke(self, inputs: dict, *args, **kwargs):
         db = SessionLocal()
         
-        print("REST-API-KEY: ", inputs.get("REST-API-KEY"))
+        print("REST-API-KEY: ", inputs)
         
         """declare variables from inputs"""
         question = inputs.get("input")

@@ -26,13 +26,14 @@ HISTORY_DIR = os.path.join(CURRENT_DIR, '..', 'chatbot', 'history')
 def verify_api_key(db: Session, api_key: str):
     
     api_key_record = project_crud.get_api_key(db, api_key)
+    print("apikey in dependency: ",api_key_record.to_dict())
     if api_key_record is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API key"
         )
-        api_key = api_key_record.to_dict()
-    return api_key.api_key
+    api_key = api_key_record
+    return api_key.to_dict().get('api_key')
 
 def get_project_detail(db: Session, project_id: int):
     project_record = project_crud.get_project_by_project_id(db, project_id)

@@ -31,10 +31,10 @@ async def verify_api_key(
         project_name: str = payload.get("project_name")
         project_record = project_crud.get_project_by_project_name(db, project_name)
         return project_record
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid API Key"
+            detail=str(e)
         )
     
 
@@ -121,7 +121,7 @@ async def create_new_chat(
     db: Session = Depends(get_db),
     project: str = Depends(verify_api_key)
 ):
-
+    
     session_record = project_dependencies.create_external_session(db, project.id)
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,

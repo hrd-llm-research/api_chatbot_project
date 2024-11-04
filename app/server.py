@@ -24,6 +24,7 @@ from app.chroma.routes import router as chroma_routes
 from app.api_generation.routes import router as api_generation_routes
 from app.api_generation.routes import verify_api_key
 from app.model_provider.routes import router as model_provider_routes
+from app.chatbot.routes import router as chatbot_routes
 
 app = FastAPI(
     title="Chroma API",
@@ -47,6 +48,7 @@ app.include_router(session_routes, prefix="/api/v1")
 app.include_router(chroma_routes, prefix="/api/v1")
 app.include_router(api_generation_routes, prefix="/api/v1")
 app.include_router(model_provider_routes, prefix="/api/v1")
+app.include_router(chatbot_routes, prefix="/api/v1")
 
 """require manually write history"""
 

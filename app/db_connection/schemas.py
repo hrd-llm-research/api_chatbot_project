@@ -88,3 +88,7 @@ class ModelCustomizationCreate(BaseModel):
     temperature: float = Field(...)
     max_token: int = Field(..., ge=1)
     
+class ExternalChatbotSchema(BaseModel):
+    input: str = Field(...)
+    external_session_id: int = Field(...)
+    project_id: int = Field(...)
