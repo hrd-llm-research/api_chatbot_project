@@ -35,6 +35,12 @@ embeddings = FastEmbedEmbeddings()
 #     temperature=1,
 # )
 
+# from langchain_ollama import OllamaLLM
+# llm = OllamaLLM(
+#     model="llama3.1",
+#     temperature=0.7,
+# )
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 history_dir = os.path.join(current_dir, 'history')
 

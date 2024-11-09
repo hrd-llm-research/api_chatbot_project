@@ -23,17 +23,23 @@ from app.api_generation.project_dependencies import is_external_session_availabl
 from app.api_generation.project_crud import get_project_by_project_id
 from app.chroma.dependencies import get_external_chroma_name
 from fastapi import status, HTTPException
+from langchain_ollama import OllamaLLM
 
 load_dotenv()
 
 # Create embeddings without GPU
 embeddings = FastEmbedEmbeddings()
 
-llm = ChatGroq(
-    model="Llama3-8b-8192",
-    temperature=1,
-    api_key="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"
+llm = OllamaLLM(
+    model="llama3.1",
+    temperature=0.7,
 )
+
+# llm = ChatGroq(
+#     model="Llama3-8b-8192",
+#     temperature=1,
+#     api_key="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"
+# )
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))

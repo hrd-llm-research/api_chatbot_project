@@ -47,12 +47,19 @@ def get_lm_from_cache(user_id):
     try:
         print("lm cache: ", routes.llm_cache)
         lm = routes.llm_cache[user_id]
+        print("before")
         if lm['provider_info']['provider_id'] == 1:
-            llm = ChatGroq(
+            # llm = ChatGroq(
+            #     model=lm['provider_info']['model_name'],
+            #     temperature=lm['temperature'],
+            #     api_key=lm['provider_api_key']
+            # )
+            from langchain_ollama import OllamaLLM
+            llm = OllamaLLM(
                 model=lm['provider_info']['model_name'],
                 temperature=lm['temperature'],
-                api_key=lm['provider_api_key']
             )
+            print("is working")
         elif lm['provider_info']['provider_id'] == 2:
             llm = OpenAI(
                 model=lm['provider_info']['model_name'],

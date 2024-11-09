@@ -9,7 +9,7 @@ from app.db_connection import models, database
 from app.db_connection.models import Base
 from fastapi.middleware.cors import CORSMiddleware
 from app.chatbot.chain import chain
-from app.chatbot.suggestionQ_chain import llm_chain
+from app.chatbot.suggestionQ_chain import chain as suggestion_chain
 from app.chatbot.project_chain import chain as external_chain
 from app.chatbot.hrd_chain import chain as conversational_rag_chain
 
@@ -63,7 +63,7 @@ add_routes(
 
 add_routes(
     app,
-    llm_chain,
+    suggestion_chain,
     path="/suggestion_chatbot",
     enabled_endpoints=["invoke"],
     dependencies=[Depends(get_current_active_user)],

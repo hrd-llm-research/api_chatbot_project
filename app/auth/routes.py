@@ -9,6 +9,10 @@ from app.db_connection.schemas import UserCreate
 from app.auth import dependencies
 from app.auth.crud import create_user
 from app.mail.dependencies import send_mail
+from app.db_connection.schemas import User
+from app.auth.dependencies import get_current_active_user
+from app.auth.dependencies import validate_existing_email
+
 
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 432003
@@ -107,5 +111,19 @@ async def resend_code(
         status_code=status.HTTP_201_CREATED,
         content={"message": f"Code have been sent to {email}. Please check your email address.",
                 "success": True
+        }
+    )
+    
+async def get_current_user(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+):
+    user = validate_existing_email(db, current_user.email)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "message": "Successfully retrieve current user",
+            "success": True,
+            "payload": user.to_dict()
         }
     )

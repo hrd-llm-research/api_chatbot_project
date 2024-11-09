@@ -14,17 +14,23 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables import Runnable, RunnableLambda
 from langchain_core.messages import HumanMessage        
 from langchain.pydantic_v1 import BaseModel, Field
-from fastapi import HTTPException, status
-        
+from fastapi import HTTPException, status  
+from langchain_ollama import OllamaLLM
+
 load_dotenv()
 
 # Create embeddings without GPU
 embeddings = FastEmbedEmbeddings()
 
-llm = ChatGroq(
-    model="Llama3-8b-8192",
-    temperature=1,
-    api_key="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"
+# llm = ChatGroq(
+#     model="Llama3-8b-8192",
+#     temperature=1,
+#     api_key="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"
+# )
+
+llm = OllamaLLM(
+    model="llama3.1",
+    temperature=0.7,
 )
 
 current_dir = os.path.dirname(os.path.abspath(__file__))

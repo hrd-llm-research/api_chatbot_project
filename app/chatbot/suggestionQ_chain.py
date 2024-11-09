@@ -10,6 +10,7 @@ from langchain_chroma import Chroma
 from langchain_core.runnables import Runnable, RunnableSequence
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain.chains import LLMChain
+from typing import Optional
 
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status 
@@ -20,6 +21,7 @@ from app.auth.dependencies import find_user
 from app.chroma.dependencies import get_chroma_name, get_collection_name, is_file_available
 from app.db_connection.schemas import ChatModel, UserResponse
 from app.session import dependencies as session_dependencies
+from langchain_ollama import OllamaLLM
 
 load_dotenv()
 
@@ -28,10 +30,15 @@ embeddings = FastEmbedEmbeddings()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 history_dir = os.path.join(current_dir, "history")
 
-lm = ChatGroq(
-    model="Llama3-8b-8192",
-    temperature=1,
-    api_key="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"
+# lm = ChatGroq(
+#     model="Llama3-8b-8192",
+#     temperature=1,
+#     api_key="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"
+# )
+
+lm = OllamaLLM(
+    model="llama3.1",
+    temperature=0.7,
 )
 
 def retrieve_document_from_chroma(
@@ -99,6 +106,10 @@ class RetrieverRunnable(Runnable):
             session_id = inputs.get("session_id")
             file_id = inputs.get("file_id")
             
+            print("Received user_id===:", user_id)
+            print("Received session_id===:", session_id)
+            print("Received file_id===:",file_id) 
+        
             """declare variables"""
             file_record = is_file_available(db, file_id)
 
@@ -136,25 +147,17 @@ class RetrieverRunnable(Runnable):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         
-llm_chain = RunnableSequence(
+    
+class Request(BaseModel):
+    user_id: int = Field(...)
+    session_id: int = Field(...)
+    file_id: Optional[int] = None  
+    
+chain = RunnableSequence(
     RetrieverRunnable()
     | prompt_template 
     | lm
     | StrOutputParser()
 )
 
-    
-class Request(BaseModel):
-    user_id: int = Field(
-        ..., ge=1,
-        description="User ID for which the request is being made."
-    )
-    session_id: int = Field(
-        ..., ge=1,
-        description="Session ID for which the request is being made."
-    )
-    file_id: int = Field(
-        ...
-    )
-    
-llm_chain = llm_chain.with_types(input_type=Request)
+chain = chain.with_types(input_type=Request)

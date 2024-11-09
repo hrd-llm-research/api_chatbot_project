@@ -90,5 +90,20 @@ class ModelCustomizationCreate(BaseModel):
     
 class ExternalChatbotSchema(BaseModel):
     input: str = Field(...)
-    external_session_id: int = Field(...)
-    project_id: int = Field(...)
+    external_session_id: int = Field(..., ge=1)
+    project_id: int = Field(..., ge=1)
+    
+class ChatbotPlaygroundSchema(BaseModel):
+    input: str = Field(...)
+    user_id: int = Field(..., ge=1)
+    session_id: int = Field(..., ge=1)
+    file_id: Optional[int] = None   
+    
+class TexBotSchema(BaseModel):
+    input: str = Field(...)
+    session_id: int = Field(..., ge=1)
+    
+class SuggestionBotSchema(BaseModel):
+    user_id: int = Field(...)
+    session_id: int = Field(...)
+    file_id: Optional[int] = None  

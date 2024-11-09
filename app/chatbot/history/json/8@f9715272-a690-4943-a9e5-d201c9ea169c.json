@@ -1,0 +1,14 @@
+[
+    {
+        "role": "user",
+        "content": "What is fintrack"
+    },
+    {
+        "role": "user",
+        "content": "What was the objective and duration of the group project missions by students of the 11th advanced course of Korea Software HRD Center?"
+    },
+    {
+        "role": "ai",
+        "content": "**What is FinTrack?**\nFinTrack is a service that enables banks to send transaction notifications to clients and schedule reminders. (From page 0)\n\n**Objective and Duration of Group Project Missions**\nThe objective of the group project missions was not explicitly stated in the provided document snippets. However, it can be inferred from the context that the main goal was to implement various development topics by students of the 11th advanced course.\n\nRegarding the duration, the document mentions that the group project lasted for 4 months from August 2023 to December 2023. (From page 0)"
+    }
+]

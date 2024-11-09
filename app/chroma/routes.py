@@ -88,6 +88,7 @@ def get_all_files(
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "Files retrieved successfully.",
+                 "sucess": True,
                  "payload": file_list}
     )
     

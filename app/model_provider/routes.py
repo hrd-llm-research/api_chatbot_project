@@ -37,13 +37,13 @@ async def get_llm(
     db: Session = Depends(get_db),
 ):
     DEFAULT_LM = {
-        "provider_api_key": "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",
-        "temperature": 0,
+        # "provider_api_key": "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",
+        "temperature": 0.7,
         "max_token": 1000,
         "created_at": "2024-10-25T00:04:25.399377",
         "provider_info": {
             "model_id": 1,
-            "model_name": "Llama3-8b-8192",
+            "model_name": "llama3.1",
             "provider_id": 1
         }
     }
