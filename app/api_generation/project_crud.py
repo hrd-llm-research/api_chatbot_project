@@ -62,6 +62,7 @@ def create_external_session(db: Session, project_id: int, session):
     return external_session_record
 
 def get_external_session_by_session_id(db: Session, session_id):
+    print("session_id", session_id)
     session = db.query(models.ExternalSession).filter(models.ExternalSession.id == session_id).first()
     return session
 

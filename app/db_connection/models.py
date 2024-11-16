@@ -58,12 +58,28 @@ class Session(Base):
     file_metadata = relationship("FileMetadata", back_populates="session", cascade="all, delete")
     
     def to_dict(self):
+        # history_info = {
+        #     "message_id": self.message_history.id,
+        #     "provider_name": self.provider.provider_name,
+        # } if self.provider else {}
         return {
             "id": self.id,
             "user_id": self.user_id,
             "session": str(self.session),
             "created_at": self.created_at.isoformat(),
         }
+    # def to_dict(self):
+        # provider_info = {
+        #     "provider_id": self.provider.id,
+        #     "provider_name": self.provider.provider_name,
+        # } if self.provider else {}
+        
+        # return {
+        #     "id": self.id,
+        #     "provider_id": self.provider_id,
+        #     "model_name": self.model_name,
+        #     "provider_info": provider_info
+        # }
         
 class MessageHistory(Base):
     __tablename__ = "message_histories"

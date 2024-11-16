@@ -115,7 +115,6 @@ class CreateRAGChainRunnable(Runnable):
         history_file_name = str(user_id)+'@'+str(session_record.session)
         
         """declare file variables"""
-        # history_text_file = history_file_name+'.txt'
         history_json_file = history_file_name+'.json'
         
         # history_text_file_dir = os.path.join(history_dir, "txt", history_text_file)
@@ -167,6 +166,7 @@ class CreateRAGChainRunnable(Runnable):
             }
         )
         llm = get_lm_from_cache(user_id)
+        print("llm ", llm)
         if llm is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

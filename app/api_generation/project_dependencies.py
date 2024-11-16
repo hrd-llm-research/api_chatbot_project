@@ -223,6 +223,7 @@ def delete_external_session(db: Session, project_id, project_name, external_sess
 
 
 def is_external_session_available(db: Session, project_id: int):
+    print("checking ", project_id)
     session_record = project_crud.get_external_session_by_session_id(db, project_id)
     if session_record is None:
         raise HTTPException(

@@ -43,11 +43,10 @@ def get_llm(db:Session, user):
             detail=str(e)
         )
         
-def get_lm_from_cache(user_id):
+def get_lm_from_cache(user_id: int):
     try:
-        print("lm cache: ", routes.llm_cache)
-        lm = routes.llm_cache[user_id]
-        print("before")
+        lm = routes.llm_cache[int(user_id)]
+        print("llm ==",lm)
         if lm['provider_info']['provider_id'] == 1:
             # llm = ChatGroq(
             #     model=lm['provider_info']['model_name'],
@@ -70,7 +69,7 @@ def get_lm_from_cache(user_id):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail="No LLM found. Please use /api/v1/model_provider/llm to get your LLM." + str(e)
         )
     
 def get_all_models(db: Session):

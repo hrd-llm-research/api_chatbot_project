@@ -42,7 +42,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()] , db:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
             detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW_Authenticate": "Bearer"}
         )
         
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -51,7 +51,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()] , db:
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.post("/reset-password")
+@router.post("/reset_password")
 async def reset_password(
     password: str = Query(...),
     email: str = Query(...),
@@ -66,7 +66,7 @@ async def reset_password(
         }
     )
 
-@router.post("/account-verify")
+@router.post("/account_verify")
 async def account_verify(
     code: str = Query("000000",min_length=6, max_length=6),
     email: str = Query("example@example.com", description="User's email"),  
@@ -82,7 +82,7 @@ async def account_verify(
         }
     )
     
-@router.post("/code-verify")
+@router.post("/code_verify")
 async def verify_code(
     code: str = Query("000000",min_length=6, max_length=6),
     email: str = Query("example@example.com", description="User's email"),  
@@ -98,7 +98,7 @@ async def verify_code(
         }
     )
     
-@router.post("/resend-code")
+@router.post("/resend_code")
 async def resend_code(
     email: str = Query("example@example.com", description="User's email"),
     db: Session = Depends(get_db)  
@@ -114,6 +114,7 @@ async def resend_code(
         }
     )
     
+@router.get("/get_current_user")
 async def get_current_user(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Session = Depends(get_db),

@@ -25,7 +25,7 @@ def get_all_sessions(db: Session, user_id: int):
 
 def is_session_available(db: Session, user_id: int, session):
     session_record = crud.find_session(db, user_id, session)
-    if session_record is False:
+    if session_record is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found"
@@ -79,11 +79,19 @@ def save_internal_session(db: Session, user, session_id: int):
 def is_history_exist(db: Session, history_filename: str):
     history_record = crud.find_history(db, history_filename)
     return history_record
+
+def get_all_session_history_detail():
+    try:
+        pass
+    except Exception as e:
+        raise e
        
        
-def get_history(db: Session, user, session_id: int, page: int, limit: int):
+def get_history(db: Session, user, session_id: int, page: int=1, limit: int=10):
     try:
         history_record = crud.get_history_by_session_id(db, session_id)
+        if history_record is None:
+            return []
         history_name = history_record.history_name
         username = user.username
         
@@ -91,7 +99,41 @@ def get_history(db: Session, user, session_id: int, page: int, limit: int):
         history_json_file_dir = os.path.join(HISTORY_DIR, "json", history_json_filename)
         
         if not os.path.exists(history_json_file_dir):
-            minio_dependencies.download_file(username, history_name, history_json_file_dir)
+            try: 
+                minio_dependencies.download_file(username, history_name, history_json_file_dir)
+            except Exception as e:
+                return []
+            
+        with open(history_json_file_dir, 'r') as json_file:
+            docs = json.load(json_file)
+            docs = docs[-(page+limit):]
+            
+        return docs
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+        
+        
+def get_history_by_session(db: Session, user, session , page: int=1, limit: int=10):
+    try:
+        session_record = is_session_available(db, user.id,session)
+        history_record = crud.get_history_by_session_id(db, session_record.id)
+        if history_record is None:
+            return []
+        history_name = history_record.history_name
+        username = user.username
+        
+        history_json_filename = history_name + ".json"
+        history_json_file_dir = os.path.join(HISTORY_DIR, "json", history_json_filename)
+        
+        if not os.path.exists(history_json_file_dir):
+            try: 
+                minio_dependencies.download_file(username, history_name, history_json_file_dir)
+            except Exception as e:
+                return []
             
         with open(history_json_file_dir, 'r') as json_file:
             docs = json.load(json_file)

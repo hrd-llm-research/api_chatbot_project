@@ -17,6 +17,7 @@ from app.api_generation.project_dependencies import get_project_detail
 from app.chroma import dependencies as chroma_dependencies
 from app.chroma import crud as chroma_crud
 from app.minIO import dependencies as minio_dependencies
+from app.session.dependencies import is_session_available
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(current_dir, "resources")
@@ -46,6 +47,17 @@ def get_all_file_records(db, session_id: int, user_id: int):
     session_available = is_session_available_by_session_id(db, user_id, session_id)
     if session_available is not None:
         file_records = crud.get_all_files(db, session_id)
+    if file_records is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="There is no file records available."
+        )
+    return file_records
+def get_all_session_file_records(db, session, user_id: int):
+    session_available = is_session_available(db, user_id, session)
+    print("session available: ",session_available.id)
+    if session_available is not None:
+        file_records = crud.get_all_files(db, session_available.id)
     if file_records is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

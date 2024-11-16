@@ -62,6 +62,22 @@ async def get_all_files(
                 })
    
    
+@router.get("/get_all_files_by_session")
+async def get_all_files_by_session(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session = Query(..., description="Chat Session"),
+    db: Session = Depends(get_db)
+):
+    print("session: ",session)
+    user = validate_existing_email(db, current_user.email)
+    file_records = dependencies.get_all_session_file_records(db, session, user.id)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"message": "Retrieve all file records successfully.",
+                 "success": True,
+                 "payload": file_records
+                })
+   
 @router.post("/api_generation/upload")
 async def external_file_upload(
     current_user: Annotated[User, Depends(get_current_active_user)],

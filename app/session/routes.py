@@ -44,6 +44,33 @@ async def get_all_sessions(
                  "payload": list_of_sessions}
     )
 
+@router.get('/all_session_histories')
+async def get_all_session_histories(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db)
+):
+    user = validate_existing_email(db, current_user.email)
+    list_of_sessions = dependencies.get_all_sessions(db, user.id)
+ 
+    all_histories = []
+    for session in list_of_sessions:
+        print("session: ",session['id'])
+        docs = dependencies.get_history(db, user, session['id'])
+        all_histories.append(
+            {
+                "id": session['id'],
+                "session" : session['session'],
+                "history": docs
+            }
+        )
+    
+    
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"message": "Retrieve all sessions successfully.",
+                 "success": True,
+                 "payload": all_histories}
+    )
 
 @router.post('/save/{session_id}')
 async def save_session(
@@ -77,6 +104,39 @@ async def get_history(
                  "payload": docs}
     )
 
+@router.get('/get_session_detail')
+async def get_session_detail(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session,
+    db: Session = Depends(get_db),
+):
+    user = validate_existing_email(db, current_user.email)
+    session_record = dependencies.is_session_available(db, user.id, session)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"message": "Get session detail successfully.",
+                 "success": True,
+                 "payload": session_record.to_dict()
+                 }
+    )
+
+@router.get('/history')
+async def get_history_by_session(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    session,
+    db: Session = Depends(get_db),
+    limit: int = Query(10, ge=1, description="Number of results to return per page"),
+    page: int = Query(1, ge=0, description="Page number of results to return, starting from 1"),
+):
+    user = validate_existing_email(db, current_user.email)
+    docs = dependencies.get_history_by_session(db, user, session, page, limit)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"message": "Get session history successfully.",
+                 "success": True,
+                 "payload": docs
+                 }
+    )
 
 @router.delete('/delete/{session_id}')
 def delete_session(
