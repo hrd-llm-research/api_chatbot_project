@@ -2,17 +2,22 @@ from sqlalchemy.orm import Session
 from app.db_connection import models
 from app.api_generation import project_dependencies
 
-def insert_project(db: Session, project_name, user_id: int, api_key):
+def insert_project(db: Session, project_name, user_id: int):
     project_data = models.Project(
             user_id=user_id,
-            project_name=project_name,
-            api_key=api_key
+            project_name=project_name
     )
     db.add(project_data)
     db.commit()
     db.refresh(project_data)
-
     return project_data
+
+def update_project_api_key(db: Session, project_id:int , api_key):
+    project_record = project_dependencies.get_project_detail(db, project_id)
+    project_record.api_key = api_key
+    db.commit()
+    db.refresh(project_record)
+    return project_record.to_dict()
 
 def get_api_key(db: Session, api_key: str):
     project_record = db.query(models.Project).filter(models.Project.api_key == api_key).first()
@@ -36,6 +41,8 @@ def update_description(db: Session, project_id: int, description: str):
     db.commit()
     db.refresh(project_record)
     return project_record.to_dict()
+
+
 
 def update_chroma_name(db: Session, project_id: int, chroma_name: str):
 

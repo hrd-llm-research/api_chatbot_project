@@ -4,7 +4,8 @@ import asyncio
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from fastapi import FastAPI
+from sqlalchemy.orm import Session
+from fastapi import FastAPI, Depends
 from fastapi.responses import RedirectResponse
 from langserve import add_routes
 from app.db_connection import models, database
@@ -14,13 +15,16 @@ from app.chatbot.chain import chain
 from app.chatbot.suggestionQ_chain import chain as suggestion_chain
 from app.chatbot.project_chain import chain as external_chain
 from app.chatbot.hrd_chain import chain as conversational_rag_chain
+from typing import Annotated
+from app.auth.dependencies import get_current_active_user, get_current_user
+from app.db_connection.schemas import User
+from app.utils import get_db
 
 from fastapi import FastAPI, Request, Depends, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from app.chatbot.dependencies import save_ai_response, save_playground_ai_response
-from app.auth.dependencies import get_current_active_user
 from app.auth.routes import router as auth_routes
 from app.session.routes import router as session_routes
 from app.chroma.routes import router as chroma_routes
@@ -30,6 +34,7 @@ from app.model_provider.routes import router as model_provider_routes
 from app.chatbot.routes import router as chatbot_routes
 from app.chatbot.project_stream import chain as streaming_chain
 from app.chatbot.chain_stream import chain as playground_streaming_chain
+from app.api_generation.routes import verify_api_key
 
 from app.db_connection.database import SessionLocal
 
@@ -125,6 +130,7 @@ async def generate_chunked_stream(prompt: dict):
                 content_type = "list_item"
             elif "```" in chunk:  # Assume code blocks with ```
                 content_type = "code"
+            
             ai_response += chunk
             yield json.dumps({"type": content_type, "content": chunk})
             await asyncio.sleep(0.05)
@@ -136,9 +142,15 @@ async def generate_chunked_stream(prompt: dict):
 
 
 @app.websocket("/ws/generate-response")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket,
+    # db: Annotated[Session, Depends(get_db)]
+    ):
     await websocket.accept()
     try:
+        # token = websocket.headers.get("REST-API-KEY")
+        # # Validate the token using your existing `get_current_user`
+        # current_user = await verify_api_key(api_key=token, db=db)
+        
         while True:  # Continuous loop to handle multiple messages
             data = await websocket.receive_json()  # Wait for each new message from the client
             async for chunk in generate_chunked_stream(data):
@@ -165,26 +177,48 @@ async def generate_playground_chunked_stream(prompt: dict):
         chaining = playground_streaming_chain | llm | StrOutputParser()
         stream = chaining.stream(prompt)
         for chunk in stream:
-            print("chunk: ",chunk)
+            # if chunk.strip() == '`':
+            #     chunk = "\\`"
+            # elif chunk.strip() == '``':
+            #     chunk = "\\`\\`"
+            # elif chunk.strip() == '```':
+            #     chunk = "\\`\\`\\`"
             # Check content and tag accordingly for better structure
-            content_type = "paragraph"
-            if "•" in chunk:  # Assume bullets denote list items
-                content_type = "list_item"
-            elif "```" in chunk:  # Assume code blocks with ```
-                content_type = "code"
+            # content_type = "paragraph"
+            # if "•" in chunk:  # Assume bullets denote list items
+            #     content_type = "list_item"
+            # elif "```" in chunk:  # Assume code blocks with ```
+            #     content_type = "code"
             ai_response += chunk
-            yield json.dumps({"type": content_type, "content": chunk})
+            # yield json.dumps({"type": content_type, "content": chunk})
+            yield json.dumps({"content":chunk})
             await asyncio.sleep(0.05)
-
+        
+        print("ai reponse\n",ai_response)
         save_playground_ai_response(db, prompt['input']['user_id'],prompt['input']['session_id'], ai_response)
         # yield json.dumps({"type": "paragraph", "content": "End of response."})
     except Exception as e:
         yield json.dumps({"type": "error", "content": f"Error generating response: {str(e)}"})
 
 @app.websocket("/ws/playground_generate-response")
-async def playground_websocket_endpoint(websocket: WebSocket):
+async def playground_websocket_endpoint(websocket: WebSocket,
+    # db: Annotated[Session, Depends(get_db)]
+    ):
     await websocket.accept()
     try:
+        
+        # token = websocket.headers.get("Authorization")
+        # if not token or not token.startswith("Bearer "):
+        #     raise WebSocketDisconnect(code=1008)
+        
+        # # Validate the token
+        # token = token.split("Bearer ")[1]
+        # # Validate the token using your existing `get_current_user`
+        # current_user = await get_current_user(token=token, db=db)
+
+        # # Check if the user is active using your existing `get_current_active_user`
+        # active_user = await get_current_active_user(current_user=current_user)
+        
         while True:  # Continuous loop to handle multiple messages
             data = await websocket.receive_json()  # Wait for each new message from the client
             generate_playground_chunked_stream(data)

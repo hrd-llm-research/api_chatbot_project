@@ -51,6 +51,7 @@ class Session(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("public.users.id"))
     session = Column(UUID(as_uuid=True))
+    session_name = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     
     user = relationship("User", back_populates="session", cascade="all, delete")
@@ -66,6 +67,7 @@ class Session(Base):
             "id": self.id,
             "user_id": self.user_id,
             "session": str(self.session),
+            "session_name":self.session_name,
             "created_at": self.created_at.isoformat(),
         }
     # def to_dict(self):
@@ -193,7 +195,7 @@ class Project(Base):
     
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("public.users.id"))
-    api_key = Column(String, nullable=False)
+    api_key = Column(String, nullable=True)
     project_name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     chroma_name = Column(String, nullable=True)

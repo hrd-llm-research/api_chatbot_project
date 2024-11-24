@@ -35,6 +35,11 @@ async def file_upload(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    if file.size > MAX_SZIE_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large. Maximum size is 50MB."
+        )
     user = validate_existing_email(db, current_user.email)
     chroma_data = dependencies.upload_file_to_chroma(db, file, user, session)
     
@@ -85,6 +90,11 @@ async def external_file_upload(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
+    if file.size > MAX_SZIE_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large. Maximum size is 50MB."
+        )
     chroma_data = dependencies.upload_external_file_to_chroma(db, file, project_id)
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,

@@ -8,6 +8,14 @@ def create_session(db: Session, session, user_id: int):
     db.refresh(session_data)
     return session_data
 
+def update_session_name(db: Session, session_name: str, session_id: int):
+    session_record = get_session_by_session_id(db, session_id)
+    print("session_record: ", session_record.to_dict())
+    if session_record.session_name is None: 
+        session_record.session_name = session_name
+        db.commit()
+        db.refresh(session_record)
+        return session_record
 
 def get_all_session(db: Session, user_id: int):
     session_records = db.query(models.Session).filter(models.Session.user_id == user_id).all()

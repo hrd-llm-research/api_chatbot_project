@@ -1,3 +1,4 @@
+import re
 import os 
 
 from sqlalchemy.orm import Session
@@ -10,7 +11,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from . import crud
 # from app.db_connection import schemas
-from app.session.crud import create_session
+from app.session.crud import create_session, update_session_name
 from app.session.dependencies import get_session, is_session_available_by_session_id
 from app.api_generation.project_crud import update_chroma_name, get_all_filenames
 from app.api_generation.project_dependencies import get_project_detail
@@ -66,7 +67,9 @@ def get_all_session_file_records(db, session, user_id: int):
     return file_records
 
 def get_collection_name(username, file_name):
-    return username + '_' + file_name[:-4]
+    # Replace spaces and special characters with underscores
+    sanitized_file_name = re.sub(r'[^\w]', '_', file_name[:-4])
+    return username + '_' + sanitized_file_name
 
 def get_chroma_name(user_id, session_id):
     return str(user_id) + '@' +str(session_id)+ '_chroma_db'
@@ -110,7 +113,7 @@ def upload_file_to_chroma(db: Session, file, user, session):
             session_record = create_session(db, session,user.id)
         
         session_id = session_record.id
-        chroma_name =  get_chroma_name(user.id, session_id)
+        chroma_name = get_chroma_name(user.id, session_id)
         chroma_dir = os.path.join(current_dir,"chroma_db")
         if not os.path.exists(chroma_dir):
             os.mkdir(chroma_dir)
@@ -130,9 +133,6 @@ def upload_file_to_chroma(db: Session, file, user, session):
         """"
         create instance of chroma class
         """
-
-        chroma_data = crud.create_chroma(db, session_id, collection_name, file_name)
-        
         all_docs_chroma = Chroma(
             collection_name="my_collection",
             embedding_function=embedding
@@ -156,6 +156,10 @@ def upload_file_to_chroma(db: Session, file, user, session):
             embedding=embedding,
             collection_name=collection_name
         )
+        
+        chroma_data = crud.create_chroma(db, session_id, collection_name, file_name)
+        print("filename: ", chroma_data.file_name[:-4])
+        update_session_name(db, chroma_data.file_name[:-4], session_id)
         
         """"
         remove file from the directory

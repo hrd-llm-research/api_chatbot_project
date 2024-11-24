@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.db_connection.models import FileMetadata, ExternalFile
 
-
 def create_chroma(db: Session, session_id, collection_name: str, file_name: str):
     file_data = FileMetadata(
         session_id = session_id,
@@ -20,6 +19,8 @@ def get_file_by_file_id(db: Session, file_id: int):
     file_record = db.query(FileMetadata).filter(FileMetadata.id == file_id).first()
     
     return file_record
+
+
 
 def get_all_files(db: Session, session_id: int):
     file_records = db.query(FileMetadata).filter(FileMetadata.session_id == session_id).all()

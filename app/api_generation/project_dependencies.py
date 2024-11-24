@@ -43,11 +43,12 @@ def get_project_detail(db: Session, project_id: int):
         )
     return project_record
 
-def generate_api_key(project_name, email: str):
+def generate_api_key(project_name, email: str, project_id:int):
     try: 
         data = {
             "project_name": project_name,
-            "email": email
+            "email": email,
+            "project_id": project_id
         }
         to_encode = data.copy()
         ALGORITHM = "HS256" 
@@ -62,8 +63,9 @@ def generate_api_key(project_name, email: str):
     
 def create_project(db: Session, project_name: str, user):
     try:
-        api_key = generate_api_key(project_name, user.email)
-        project_record = project_crud.insert_project(db, project_name, user.id, api_key)
+        project_record = project_crud.insert_project(db, project_name, user.id)
+        api_key = generate_api_key(project_name, user.email, project_record.id)
+        project_crud.update_project_api_key(db, project_record.id, api_key)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

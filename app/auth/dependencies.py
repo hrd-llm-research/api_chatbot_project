@@ -79,7 +79,7 @@ async def get_current_user(
         
         if user is None:
             raise credentials_exception
-        
+        print("get user: ",user.to_dict())
         return user
         
     except Exception as e:
@@ -88,6 +88,7 @@ async def get_current_user(
 async def get_current_active_user(
     current_user: Annotated[schemas.User, Depends(get_current_user)],
 ):
+    print("current is active: ",current_user)
     if current_user.is_active == False:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return current_user

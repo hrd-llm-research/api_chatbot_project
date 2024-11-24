@@ -28,8 +28,8 @@ async def verify_api_key(
     try: 
         api_key_record = project_dependencies.verify_api_key(db, api_key)
         payload = jwt.decode(api_key, project_dependencies.SECRET_KEY, algorithms=[project_dependencies.ALGORITHM])
-        project_name: str = payload.get("project_name")
-        project_record = project_crud.get_project_by_project_name(db, project_name)
+        project_id: int = payload.get("project_id")
+        project_record = project_crud.get_project_by_project_id(db, project_id)
         return project_record
     except Exception as e:
         raise HTTPException(

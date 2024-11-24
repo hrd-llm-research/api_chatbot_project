@@ -17,7 +17,7 @@ class TokenData(BaseModel):
 class User(BaseModel):
     username: str | None = Field(
         min_length=2,
-        max_length=10,
+        max_length=30,
     )
     email: str | None = Field(
         default="string",
