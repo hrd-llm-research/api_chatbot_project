@@ -38,3 +38,8 @@ def get_models(db: Session):
     models = db.query(Model).all()
     model_lists = [model.to_dict() for model in models]
     return model_lists
+
+def get_providers(db: Session):
+    provider_record = db.query(ModelProvider).all()
+    provider_lists = [provider.to_dict() for provider in provider_record]
+    return provider_lists

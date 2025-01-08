@@ -49,7 +49,12 @@ class UserCreate(User):
         if not any(char in "@$!%*?&" for char in value):
             raise HTTPException(status_code=422, detail="Password must contain at least one special character")
         return value
-        
+  
+class ThirdPartyUserCreate(User):
+    image: str | None
+    sub: str
+    
+      
 class FileSchemaDB(BaseModel):
     id: int
     session_id: int = Field(
@@ -84,7 +89,7 @@ class ProjectDescription(BaseModel):
 
 class ModelCustomizationCreate(BaseModel):
     model_id: int = Field(...)
-    provider_api_key: str = Field(...)
+    provider_api_key: Optional[str] = None  
     temperature: float = Field(...)
     max_token: int = Field(..., ge=1)
     

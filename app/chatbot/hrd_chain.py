@@ -129,12 +129,15 @@ class HRDBotRAGChain(Runnable):
             output_messages_key="answer",
         )
 
+        # return conversational_rag_chain
         # Invoke the chain with input and session_id
         result = conversational_rag_chain.invoke(
             {"input": user_input},
             config={"configurable": {"session_id": session_id}},
         )
         return result['answer']
+    
+# chain = (HRDBotRAGChain)
 
 def get_hrd_history(id: str, limit:int,page:int):
     

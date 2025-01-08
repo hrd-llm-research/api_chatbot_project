@@ -171,28 +171,50 @@ def find_user(db: Session, user_id: int):
 
 def validate_email(db: Session, email: str):
     user = crud.get_user_by_email(db, email)
-    if user is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already exists"
-        )
-    return True
+    # if user is not None:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="Email already exists"
+    #     )
+    return user
 
 def create_user(
     db:Session,
-    user
+    user,
+    is_credential: bool
 ):
     try:
-        validate_email(db, user.email)
+        # Google authorization
+        # ...
+        email = user.email.lower()
+        print("user: ",user.email)
+        # Oauth authorization
+        user_record = validate_email(db, email)
+        print("user_record: ",user_record)
+        if user_record is None and is_credential == True:
+            user = crud.create_user(db, user)
+            user.email.lower()
+            code = generate_opt(db, user.id)
+            send_mail(email, 'Verify Code to activate the account', f'Here is the {code} for account activation. Please enter your code.')
         
-        user = crud.create_user(db, user)
-        code = generate_opt(db, user.id)
-        
-        send_mail(user.email, 'Verify Code to activate the account', f'Here is the {code} for account activation. Please enter your code.')
+        elif user_record is not None and is_credential == True:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already exists"
+            )
+            
+        elif user_record is None and is_credential == False:
+            user = crud.create_third_party_user(db, user)
+            user.email.lower()
+            
+        elif user_record is not None and is_credential == False:
+            user_record.email.lower()
+            return user_record.to_dict()
+
         return user.to_dict()
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-    
+

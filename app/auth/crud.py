@@ -17,6 +17,23 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(user_record)
     return user_record
 
+def create_third_party_user(db: Session, user: schemas.ThirdPartyUserCreate):
+    hashed_password = dependencies.pwd_context.hash(user.sub)
+    
+    user_record = models.User(
+        username=user.username,
+        email=user.email,
+        password=hashed_password,
+        profile_img=user.image,
+        is_active=True
+    )
+    
+    db.add(user_record)
+    db.commit()
+    db.refresh(user_record)
+    return user_record
+
+
 def get_user_by_email(db: Session, email: str):
     user_record = db.query(models.User).filter(models.User.email == email).first()
     # user_response = schemas.UserResponse(

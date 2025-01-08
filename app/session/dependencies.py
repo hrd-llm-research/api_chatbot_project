@@ -106,7 +106,13 @@ def get_history(db: Session, user, session_id: int, page: int=1, limit: int=10):
             
         with open(history_json_file_dir, 'r') as json_file:
             docs = json.load(json_file)
-            docs = docs[-(page+limit):]
+            docs.reverse()
+            start_index = (page - 1) * limit
+            end_index = start_index + limit
+            sliced_data = docs[start_index:end_index]
+            
+            # Reverse the sliced result to preserve its order
+            return sliced_data[::-1]
             
         return docs
             
@@ -137,9 +143,16 @@ def get_history_by_session(db: Session, user, session , page: int=1, limit: int=
             
         with open(history_json_file_dir, 'r') as json_file:
             docs = json.load(json_file)
-            docs = docs[-(page+limit):]
+            docs.reverse()
             
-        return docs
+            
+            start_index = (page - 1) * limit
+            end_index = start_index + limit
+            sliced_data = docs[start_index:end_index]
+            
+            # Reverse the sliced result to preserve its order
+            return sliced_data[::-1]
+
             
     except Exception as e:
         raise HTTPException(

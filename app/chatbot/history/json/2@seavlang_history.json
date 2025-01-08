@@ -6,5 +6,49 @@
     {
         "role": "ai",
         "content": "Hello! How can I assist you today? Would you like to ask a question or find information from the uploaded documents?"
+    },
+    {
+        "role": "user",
+        "content": "Hello"
+    },
+    {
+        "role": "user",
+        "content": "hi"
+    },
+    {
+        "role": "ai",
+        "content": "Hello back to you! It looks like we're having a friendly chat. If you're ready, I'd love to help you with any questions or information needs you may have. What's on your mind? \n\n(If you need a reminder, the uploaded documents are research papers about various topics, and I can try to find specific information within those papers for you.)"
+    },
+    {
+        "role": "user",
+        "content": "Hello"
+    },
+    {
+        "role": "ai",
+        "content": "Hello back to you! It looks like we're having a friendly chat. If you're ready, I'd love to help you with any questions or information needs you may have. What's on your mind?"
+    },
+    {
+        "role": "user",
+        "content": "Hello"
+    },
+    {
+        "role": "ai",
+        "content": "It seems like we've had a nice exchange of hellos! If you're ready to move forward, what would you like to know or find out from the uploaded documents? I'm here to help!"
+    },
+    {
+        "role": "user",
+        "content": "Tell me about you"
+    },
+    {
+        "role": "ai",
+        "content": "I'd be happy to introduce myself!\n\nI'm an assistant designed to help users like you find specific information within a set of uploaded documents. I have access to the content of these documents and can provide precise answers based on the text within them.\n\nYou've uploaded several research papers with various topics, such as TradeWise, Spring Team, FinTrack, and more. If you have a specific question or need help finding something within one of these papers, just let me know!\n\nWhat would you like to know about the documents?"
+    },
+    {
+        "role": "user",
+        "content": "Hello"
+    },
+    {
+        "role": "ai",
+        "content": "It looks like we're having another friendly hello! I'm happy to keep chatting with you.\n\nIf you'd like to move forward and ask a question or find information from the uploaded documents, please feel free to ask. If not, no worries at all!\n\nJust a gentle reminder that I can help you with questions or tasks related to the content of the research papers. Would you like to try something new?"
     }
 ]

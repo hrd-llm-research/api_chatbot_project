@@ -162,6 +162,37 @@ async def websocket_endpoint(websocket: WebSocket,
         await websocket.send_text(json.dumps({"type": "error", "content": f"Error: {str(e)}"}))
 
 
+async def generate_playground_widget_chunked_stream(prompt: dict):
+    try:
+        ai_response = ""
+        await asyncio.sleep(0.05)
+        
+        stream = streaming_chain.stream(prompt)
+        for chunk in stream:
+            
+            ai_response += chunk
+            yield json.dumps({"content": chunk})
+            await asyncio.sleep(0.05)
+    except Exception as e:
+        yield json.dumps({"type": "error", "content": f"Error generating response: {str(e)}"})
+
+
+@app.websocket("/ws/generate-response-playground-widget")
+async def widget_websocket_endpoint(websocket: WebSocket
+    ):
+    await websocket.accept()
+    try:
+        while True:  # Continuous loop to handle multiple messages
+            data = await websocket.receive_json()  # Wait for each new message from the client
+            async for chunk in generate_chunked_stream(data):
+                await websocket.send_text(chunk)
+        
+    except WebSocketDisconnect:
+        print("Client disconnected")
+    except Exception as e:
+        await websocket.send_text(json.dumps({"type": "error", "content": f"Error: {str(e)}"}))
+
+
 async def generate_playground_chunked_stream(prompt: dict):
     try:
         db = SessionLocal()

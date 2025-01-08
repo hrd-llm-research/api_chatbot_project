@@ -97,6 +97,7 @@ async def get_history(
 ):
     user = validate_existing_email(db, current_user.email)
     docs = dependencies.get_history(db, user, session_id, page, limit)
+    print("length docs: ",len(docs))
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "Get session history successfully.",
@@ -130,6 +131,7 @@ async def get_history_by_session(
 ):
     user = validate_existing_email(db, current_user.email)
     docs = dependencies.get_history_by_session(db, user, session, page, limit)
+    print("length docs: ", len(docs))
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={"message": "Get session history successfully.",

@@ -5,9 +5,8 @@ from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from app.utils import get_db
-from app.db_connection.schemas import UserCreate
+from app.db_connection.schemas import UserCreate, ThirdPartyUserCreate
 from app.auth import dependencies
-from app.auth.crud import create_user
 from app.mail.dependencies import send_mail
 from app.db_connection.schemas import User
 from app.auth.dependencies import get_current_active_user
@@ -25,13 +24,32 @@ router = APIRouter(
 
 @router.post("/register")
 async def register(user: UserCreate, db: Session = Depends(get_db)):
-    user_response = dependencies.create_user(db, user)
+    user_response = dependencies.create_user(db, user, True)
     
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
         content={"message": "You registered successfully",
                  "success": True,
                  "payload": user_response
+        }
+    )
+    
+@router.post("/third_party_login")
+async def third_party_login(
+    user: ThirdPartyUserCreate,
+    db: Session = Depends(get_db)
+):
+    user_response = dependencies.create_user(db, user, False)
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = dependencies.create_access_token(
+        data={"email": user.email}, expires_delta=access_token_expires
+    )
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content={"message": "You registered successfully",
+                 "success": True,
+                 "payload": user_response,
+                 "access_token": access_token
         }
     )
     

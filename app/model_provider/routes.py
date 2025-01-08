@@ -44,20 +44,14 @@ async def get_llm(
         "provider_info": {
             "model_id": 1,
             "model_name": "llama3.1",
-            "provider_id": 1
+            "provider_id": 1,
+            "provider_name":"default"
         }
     }
     user = validate_existing_email(db, current_user.email)
     llm_record = dependencies.get_llm(db, user)
-    if not llm_record is None:
-        llm_cache[user.id] = llm_record.to_dict()
-        return JSONResponse(
-        status_code=200,
-        content={"message": "LLM retrieved successfully.",
-                 "success": True,
-                 "payload": llm_record.to_dict()}
-    )
-    else: 
+    
+    if llm_record is None:
         llm_cache[user.id] = DEFAULT_LM
         return JSONResponse(
         status_code=200,
@@ -65,6 +59,31 @@ async def get_llm(
                  "success": True,
                  "payload": DEFAULT_LM}
     )
+        
+    llm_cache[user.id] = llm_record.to_dict()
+    return JSONResponse(
+        status_code=200,
+        content={"message": "LLM retrieved successfully.",
+                 "success": True,
+                 "payload": llm_record.to_dict()}
+    )
+    # if not llm_record is None:
+    #     llm_cache[user.id] = llm_record.to_dict()
+    #     # llm_record.provider_api_key = "123"
+    #     return JSONResponse(
+    #     status_code=200,
+    #     content={"message": "LLM retrieved successfully.",
+    #              "success": True,
+    #              "payload": llm_record.to_dict()}
+    # )
+    # else: 
+    #     llm_cache[user.id] = DEFAULT_LM
+    #     return JSONResponse(
+    #     status_code=200,
+    #     content={"message": "LLM retrieved successfully.",
+    #              "success": True,
+    #              "payload": DEFAULT_LM}
+    # )
 
 
 @router.get("/all__models")
@@ -81,4 +100,16 @@ async def get_all_models(
                  "models": model}
     )
 
-
+@router.get("/all_providers")
+async def get_all_providers(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Session = Depends(get_db),
+):
+    user = validate_existing_email(db, current_user.email)
+    providers = dependencies.get_all_providers(db)
+    return JSONResponse(
+        status_code=200,
+        content={"message": "All providers retrieved successfully.",
+                 "success": True,
+                 "models": providers}
+    )

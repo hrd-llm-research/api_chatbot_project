@@ -11,7 +11,7 @@ def update_llm(db: Session, request: ModelCustomizationCreate, user):
     try:
         model_record = is_lm_available(db, user.id)
         if model_record:
-            customed_model = crud.update_customed_model(db, request)
+            customed_model = crud.update_customed_model(db, user.id, request)
         else:
             customed_model = crud.create_model_customization(db, request, user.id)
         return customed_model
@@ -76,6 +76,16 @@ def get_all_models(db: Session):
     try:
         models = crud.get_models(db)
         return models
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+        
+def get_all_providers(db: Session):
+    try:
+        providers = crud.get_providers(db)
+        return providers
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

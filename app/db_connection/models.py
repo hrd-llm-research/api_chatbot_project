@@ -132,6 +132,12 @@ class ModelProvider(Base):
     
     model = relationship("Model", back_populates="provider", cascade="all, delete")
     
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "provider_name": self.provider_name
+        } 
+    
 class Model(Base):
     __tablename__ = "models"
     __table_args__ = {'schema': 'public'}  # Specify schema
@@ -175,7 +181,8 @@ class ModelCustomization(Base):
         provider_info = {
             "model_id": self.model.id,
             "model_name": self.model.model_name,  # Adjust based on actual fields in `ModelProvider`
-            "provider_id": self.model.provider_id,  # Adjust based on actual fields in `ModelProvider`
+            "provider_id": self.model.provider.id if self.model.provider else None,
+            "provider_name": self.model.provider.provider_name if self.model.provider else None,
         } if self.model else {}
 
         return {
