@@ -16,6 +16,7 @@ from langchain_core.messages import HumanMessage
 from langchain.pydantic_v1 import BaseModel, Field
 from fastapi import HTTPException, status  
 from langchain_ollama import OllamaLLM
+from langchain_community.llms import Ollama
 
 load_dotenv()
 
@@ -28,10 +29,13 @@ embeddings = FastEmbedEmbeddings()
 #     api_key="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"
 # )
 
-llm = OllamaLLM(
+llm = Ollama(
+    base_url="http://ollama:11434",
     model="llama3.1",
     temperature=0.7,
+    # timeout=30,  # Increase the timeout to 30 seconds
 )
+
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 history_dir = os.path.join(current_dir, 'history')

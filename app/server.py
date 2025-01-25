@@ -3,7 +3,7 @@ import json
 import asyncio
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+from langchain_groq import ChatGroq
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Depends
 from fastapi.responses import RedirectResponse
@@ -37,6 +37,11 @@ from app.chatbot.chain_stream import chain as playground_streaming_chain
 from app.api_generation.routes import verify_api_key
 
 from app.db_connection.database import SessionLocal
+llm = ChatGroq(
+    model="Llama3-8b-8192",
+    temperature=1,
+    api_key="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"
+)
 
 app = FastAPI(
     title="Chroma API",
@@ -111,8 +116,8 @@ add_routes(
     app,
     playground_streaming_chain,
     path="/socket",
-    enabled_endpoints=["invoke", "stream"],
-    dependencies=[Depends(verify_api_key)]
+    # enabled_endpoints=["invoke", "stream"],
+    # dependencies=[Depends(verify_api_key)]
 )
 
 async def generate_chunked_stream(prompt: dict):
@@ -150,11 +155,12 @@ async def websocket_endpoint(websocket: WebSocket,
         # token = websocket.headers.get("REST-API-KEY")
         # # Validate the token using your existing `get_current_user`
         # current_user = await verify_api_key(api_key=token, db=db)
-        
-        while True:  # Continuous loop to handle multiple messages
-            data = await websocket.receive_json()  # Wait for each new message from the client
-            async for chunk in generate_chunked_stream(data):
-                await websocket.send_text(chunk)
+        data = await websocket.receive_json()
+        print("data: ",data)
+        # while True:  # Continuous loop to handle multiple messages
+        #       # Wait for each new message from the client
+        #     async for chunk in generate_chunked_stream(data):
+        #         await websocket.send_text(chunk)
         
     except WebSocketDisconnect:
         print("Client disconnected")
@@ -203,7 +209,7 @@ async def generate_playground_chunked_stream(prompt: dict):
         from langchain.schema.output_parser import StrOutputParser
         from app.model_provider.dependencies import get_lm_from_cache
         
-        llm = get_lm_from_cache(prompt['input']['user_id'])
+        # llm = get_lm_from_cache(prompt['input']['user_id'])
         
         chaining = playground_streaming_chain | llm | StrOutputParser()
         stream = chaining.stream(prompt)
@@ -264,5 +270,36 @@ async def playground_websocket_endpoint(websocket: WebSocket,
 
 if __name__ == "__main__":
     import uvicorn
-    
     uvicorn.run(app, host="localhost", port=8000)
+
+
+
+# from fastapi import FastAPI
+# from fastapi.responses import RedirectResponse
+# from langserve import add_routes
+
+
+# app = FastAPI(
+#     title="Chatbot API",
+#     description="A simple chatbot API with Langchain and FastAPI",
+#     version="1.0.0",
+# )
+
+# from langchain_community.llms import Ollama
+# from langchain.prompts import ChatPromptTemplate
+# prompt = ChatPromptTemplate.from_template("tell me a joke about {topic}")
+# llm = Ollama(
+#     base_url="http://ollama:11434",
+#     model="llama3.2:1b",
+#     temperature=0.7,
+#     # timeout=30,  # Increase the timeout to 30 seconds
+# )
+# add_routes(
+#     app,
+#     prompt | llm,
+#     path="/chat_with_llm"
+# )
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="localhost", port=8088)

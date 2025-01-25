@@ -1,5 +1,7 @@
 __pycache__
 .env
 
+ollama
+ollama-data
 app/chroma/chroma_db/*
 app/chroma/resources/*

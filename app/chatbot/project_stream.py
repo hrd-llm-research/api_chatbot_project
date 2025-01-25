@@ -1,4 +1,5 @@
 import os
+import jwt
 
 import json
 from dotenv import load_dotenv
@@ -24,16 +25,17 @@ from app.api_generation.project_crud import get_project_by_project_id
 from app.chroma.dependencies import get_external_chroma_name
 from fastapi import status, HTTPException
 from langchain_ollama import OllamaLLM
+from app.api_generation import project_dependencies
 
 load_dotenv()
 
 # Create embeddings without GPU
 embeddings = FastEmbedEmbeddings()
 
-llm = OllamaLLM(
-    model="llama3.1",
-    temperature=0.7,
-)
+# llm = OllamaLLM(
+#     model="llama3.1",
+#     temperature=0.7,
+# )
 
 # llm = ChatGroq(
 #     model="Llama3-8b-8192",
@@ -41,6 +43,13 @@ llm = OllamaLLM(
 #     api_key="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"
 # )
 
+from langchain_community.llms import Ollama
+llm = Ollama(
+    base_url="http://ollama:11434",
+    model="llama3.1",
+    temperature=0.7,
+    # timeout=30,  # Increase the timeout to 30 seconds
+)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 history_dir = os.path.join(current_dir, 'history')
@@ -99,6 +108,13 @@ class CreateRAGChainRunnable(Runnable):
         question = inputs['input']['input']
         session_id = inputs['input']['external_session_id']
         project_id = inputs['input']['project_id']
+        # api_key = inputs['input']['api_key']
+        
+        # Modify from using project_id to api_key
+        # project_dependencies.verify_api_key(db, api_key)
+        # payload = jwt.decode(api_key, project_dependencies.SECRET_KEY, algorithms=[project_dependencies.ALGORITHM])
+        # project_id: int = payload.get("project_id")
+        # =========================================
         
         """Check if project & session available"""
         session_data = is_external_session_available(db, session_id)
@@ -202,9 +218,15 @@ class Request(BaseModel):
         ..., ge=1,
         description="External session ID for which the request is being made."
     )
+    # Modify from using project_id to api_key
     project_id: int = Field(
         ..., ge=1,
         description="The ID of the project to which the session belongs."
     )
+    
+    # api_key: str = Field(
+    #     ...,
+    #     description="Get your API KEY from your project APP."
+    # )
     
 chain = chain.with_types(input_type=Request)

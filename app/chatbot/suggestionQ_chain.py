@@ -35,11 +35,19 @@ history_dir = os.path.join(current_dir, "history")
 #     temperature=1,
 #     api_key="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"
 # )
-
-lm = OllamaLLM(
+from langchain_community.llms import Ollama
+lm = Ollama(
+    base_url="http://ollama:11434",
     model="llama3.1",
     temperature=0.7,
+    # timeout=30,  # Increase the timeout to 30 seconds
 )
+
+# lm = ChatGroq(
+#     model="Llama3-8b-8192",
+#     temperature=1,
+#     api_key="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"
+# )
 
 def retrieve_document_from_chroma(
     chat_request: ChatModel, top_k: int=5, score_threshold: float=0.5  

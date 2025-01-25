@@ -34,12 +34,25 @@ embeddings = FastEmbedEmbeddings()
 #     model=os.environ.get('OPENAI_MODEL_NAME'),
 #     temperature=1,
 # )
+# llm = ChatGroq(
+#     model="Llama3-8b-8192",
+#     temperature=1,
+#     api_key="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"
+# )
 
 # from langchain_ollama import OllamaLLM
 # llm = OllamaLLM(
 #     model="llama3.1",
 #     temperature=0.7,
 # )
+
+from langchain_community.llms import Ollama
+llm = Ollama(
+    base_url="http://ollama:11434",
+    model="llama3.1",
+    temperature=0.7,
+    # timeout=30,  # Increase the timeout to 30 seconds
+)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 history_dir = os.path.join(current_dir, 'history')
@@ -99,6 +112,13 @@ class CreateRAGChainRunnable(Runnable):
             user_id = inputs['input']['user_id']
             session_id = inputs['input']['session_id']
             file_id = inputs['input']['file_id']
+            
+            # input_data = inputs.get('input')
+            # question = input_data.get('input')
+            # user_id = input_data.get('user_id')
+            # session_id = input_data.get('session_id')
+            # file_id = input_data.get('file_id')
+            
             """declare variables"""
             session_record = session_dependencies.is_session_available_by_session_id(db, user_id, session_id)
 
@@ -163,6 +183,7 @@ class CreateRAGChainRunnable(Runnable):
             )
             
             llm = get_lm_from_cache(user_id)
+            print("llm: ", llm)
             if llm is None:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -203,15 +224,15 @@ class CreateRAGChainRunnable(Runnable):
                 detail=str(e)
             )
         
-def get_llm(user_id):
-    print("user_id", user_id)
-    llm = get_lm_from_cache(int(user_id))
-    if llm is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No LLM found. Please use /api/v1/model_provider/llm to get your LLM."
-        )
-    return llm
+# def get_llm(user_id):
+#     print("user_id", user_id)
+#     llm = get_lm_from_cache(int(user_id))
+#     if llm is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="No LLM found. Please use /api/v1/model_provider/llm to get your LLM."
+#         )
+#     return llm
 
 chain = RunnableSequence(
     CreateRAGChainRunnable()

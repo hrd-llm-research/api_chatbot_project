@@ -9,7 +9,7 @@ Install the LangChain CLI if you haven't yet
 To run MinIO using Docker, execute the following command:
 
 ```sh
-docker run -dp 9000:9000 -p 9001:9001 --name minio \
+docker run -dp 9000:9000 -p 9004:9001 --name minio \
   -v /Users/phanith/Documents/data:/data \
   -e "MINIO_ROOT_USER=minioadmin"\
   -e "MINIO_ROOT_PASSWORD=minioadmin" \

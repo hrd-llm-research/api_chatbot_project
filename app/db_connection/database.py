@@ -14,7 +14,7 @@ _USER = os.environ.get('PGVECTOR_USER')
 _PASSWORD = os.environ.get('PGVECTOR_PASSWORD')
 
 # SQLALCHEMY_DATABASE_URL = f"postgresql://{_USER}:{_PASSWORD}@{_HOST}:{_PORT}/{_DATABASE}"
-SQLALCHEMY_DATABASE_URL="postgresql://postgres:123@110.74.194.123:6000/chatbot_project_api"
+SQLALCHEMY_DATABASE_URL="postgresql://postgres:123@110.74.194.125:6000/chatbot_project_api"
 
 Base = declarative_base()
 

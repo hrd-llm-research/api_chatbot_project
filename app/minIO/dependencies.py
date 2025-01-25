@@ -8,7 +8,7 @@ import os
 load_dotenv()
 
 minio_client = Minio(
-    endpoint="110.74.194.123:9000",
+    endpoint="110.74.194.125:9000",
     access_key="minioadmin",
     secret_key="minioadmin",
     secure=False # Set to True if you have configured TLS/SSL

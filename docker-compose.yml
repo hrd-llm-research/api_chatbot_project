@@ -1,47 +1,115 @@
+# version: '3.8'
+
+# services:
+  # postgres:
+  #   image: postgres:15
+  #   container_name: chatbot_db
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: 123
+  #     POSTGRES_DB: chatbot_project_api2
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "6000:5432"
+
+#   # minio:
+#   #   image: minio/minio:latest
+#   #   container_name: minio
+#   #   environment:
+#   #     MINIO_ROOT_USER: minioadmin
+#   #     MINIO_ROOT_PASSWORD: minioadmin
+#   #   volumes:
+#   #     - minio_data:/data
+#   #   ports:
+#   #     - "9000:9000"
+#   #     - "9001:9001"
+#   #   command: server /data --console-address ":9001"
+
+#   fastapi:
+#     build:
+#       context: .
+#     container_name: chatbot_api
+#     # environment:
+#     #   DATABASE_URL: postgresql://postgres:123@postgres:6000/chatbot_project_api2
+#     #   MINIO_ENDPOINT: 110.74.194.123:9000
+#     #   MINIO_ACCESS_KEY: minioadmin
+#     #   MINIO_SECRET_KEY: minioadmin
+#     # depends_on:
+#     #   - postgres
+#     #   - minio
+#     ports:
+#       - "9080:8000"
+#     command: uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload
+
+# # volumes:
+# #   postgres_data:
+# #   minio_data:
+
+
+# services:
+#   ollama:
+#     container_name: ollama
+#     image: ollama/ollama
+#     restart: always
+#     ports:
+#     - "9001:11434"
+#     environment:
+#     - "OLLAMA_HOST=0.0.0.0"
+#     volumes:
+#     - "./ollama:/root/.ollama"
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: 1
+#               capabilities: [gpu]
+
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    container_name: chatbot_db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
-      POSTGRES_DB: chatbot_project_api2
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "6000:5432"
+# #   postgres:
+# #     image: postgres:15
+# #     container_name: chatbot_db
+# #     ports:
+# #       - "9003:5432"
+# #     environment:
+# #       POSTGRES_USER: postgres
+# #       POSTGRES_PASSWORD: 123
+# #       POSTGRES_DB: chatbot_project_api
+# #     volumes:
+# #       - postgres_data:/var/lib/postgresql/data
 
-  minio:
-    image: minio/minio:latest
-    container_name: minio
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    volumes:
-      - minio_data:/data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    command: server /data --console-address ":9001"
-
+#   # minio:
+#   #   image: minio/minio
+#   #   container_name: minio-server
+#   #   ports:
+#   #     - "9000:9000"
+#   #     - "9004:9001"
+#   #   environment:
+#   #     MINIO_ROOT_USER: minioadmin
+#   #     MINIO_ROOT_PASSWORD: minioadmin
+#   #   volumes:
+#   #     - minio_data:/data
+#   #   command: server /data --console-address ":9004"
+    
   fastapi:
     build:
       context: .
-    container_name: chatbot_api
-    environment:
-      DATABASE_URL: postgresql://postgres:123@postgres:6000/chatbot_project_api2
-      MINIO_ENDPOINT: 110.74.194.123:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-    depends_on:
-      - postgres
-      - minio
+      dockerfile: Dockerfile
+    container_name: fastapi_container
+    networks:
+      - my_custom_network
     ports:
-      - "9080:8000"
-    command: uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload
+      - "9002:9080"
 
-volumes:
-  postgres_data:
-  minio_data:
+# # networks:
+# #   my_custom_network:
+# #     driver: bridge
+
+# # volumes:
+# #   postgres_data:
+#   # minio_data:
+
+

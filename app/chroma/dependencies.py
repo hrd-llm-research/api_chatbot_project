@@ -65,11 +65,15 @@ def get_all_session_file_records(db, session, user_id: int):
             detail="There is no file records available."
         )
     return file_records
-
+from datetime import datetime
 def get_collection_name(username, file_name):
     # Replace spaces and special characters with underscores
     sanitized_file_name = re.sub(r'[^\w]', '_', file_name[:-4])
-    return username + '_' + sanitized_file_name
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    # collection_name=username + '_' + sanitized_file_name
+    collection_name=username + '_' + timestamp
+    print("collection name: ", collection_name)
+    return collection_name
 
 def get_chroma_name(user_id, session_id):
     return str(user_id) + '@' +str(session_id)+ '_chroma_db'

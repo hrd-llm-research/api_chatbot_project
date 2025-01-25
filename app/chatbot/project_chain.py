@@ -30,16 +30,16 @@ load_dotenv()
 # Create embeddings without GPU
 embeddings = FastEmbedEmbeddings()
 
-llm = OllamaLLM(
-    model="llama3.1",
-    temperature=0.7,
-)
-
-# llm = ChatGroq(
-#     model="Llama3-8b-8192",
-#     temperature=1,
-#     api_key="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"
+# llm = OllamaLLM(
+#     model="llama3.1",
+#     temperature=0.7,
 # )
+
+llm = ChatGroq(
+    model="Llama3-8b-8192",
+    temperature=1,
+    api_key="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"
+)
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))

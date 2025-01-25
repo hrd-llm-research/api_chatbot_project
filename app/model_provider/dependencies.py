@@ -53,10 +53,18 @@ def get_lm_from_cache(user_id: int):
             #     temperature=lm['temperature'],
             #     api_key=lm['provider_api_key']
             # )
-            from langchain_ollama import OllamaLLM
-            llm = OllamaLLM(
+            # from langchain_ollama import OllamaLLM
+            # llm = OllamaLLM(
+            #     model=lm['provider_info']['model_name'],
+            #     temperature=lm['temperature'],
+            # )
+            
+            from langchain_community.llms import Ollama
+            llm = Ollama(
+                base_url="http://ollama:11434",
                 model=lm['provider_info']['model_name'],
                 temperature=lm['temperature'],
+                # timeout=30,  # Increase the timeout to 30 seconds
             )
             print("is working")
         elif lm['provider_info']['provider_id'] == 2:

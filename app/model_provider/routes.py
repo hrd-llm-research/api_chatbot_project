@@ -37,9 +37,8 @@ async def get_llm(
     db: Session = Depends(get_db),
 ):
     DEFAULT_LM = {
-        # "provider_api_key": "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",
         "temperature": 0.7,
-        "max_token": 1000,
+        "max_token": 10000,
         "created_at": "2024-10-25T00:04:25.399377",
         "provider_info": {
             "model_id": 1,
@@ -48,19 +47,34 @@ async def get_llm(
             "provider_name":"default"
         }
     }
+    # DEFAULT_LM = {
+    #     "provider_api_key": "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",
+    #     "temperature": 0.7,
+    #     "max_token": 1000,
+    #     "created_at": "2024-10-25T00:04:25.399377",
+    #     "provider_info": {
+    #         "model_id": 1,
+    #         "model_name": "Llama3-8b-8192",
+    #         "provider_id": 1,
+    #         "provider_name":"default"
+    #     }
+    # }
     user = validate_existing_email(db, current_user.email)
     llm_record = dependencies.get_llm(db, user)
     
     if llm_record is None:
         llm_cache[user.id] = DEFAULT_LM
+        print("llm cache: ", llm_cache[user.id])
         return JSONResponse(
         status_code=200,
         content={"message": "LLM retrieved successfully.",
                  "success": True,
                  "payload": DEFAULT_LM}
     )
-        
+    
+    
     llm_cache[user.id] = llm_record.to_dict()
+    print("llm cache: ", llm_cache[user.id])
     return JSONResponse(
         status_code=200,
         content={"message": "LLM retrieved successfully.",

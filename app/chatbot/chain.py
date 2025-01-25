@@ -30,10 +30,11 @@ load_dotenv()
 # Create embeddings without GPU
 embeddings = FastEmbedEmbeddings()
 
-# llm = ChatGroq(
-#     model=os.environ.get('OPENAI_MODEL_NAME'),
-#     temperature=1,
-# )
+llm = ChatGroq(
+    model="Llama3-8b-8192",
+    temperature=1,
+    api_key="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"
+)
 
 # from langchain_ollama import OllamaLLM
 # llm = OllamaLLM(
@@ -165,7 +166,12 @@ class CreateRAGChainRunnable(Runnable):
                 "score_threshold":0.2
             }
         )
-        llm = get_lm_from_cache(user_id)
+        # llm = get_lm_from_cache(user_id)
+        llm = ChatGroq(
+            model="Llama3-8b-8192",
+            temperature=1,
+            api_key="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"
+        )
         print("llm ", llm)
         if llm is None:
             raise HTTPException(
