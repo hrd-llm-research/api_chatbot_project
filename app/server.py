@@ -157,10 +157,10 @@ async def websocket_endpoint(websocket: WebSocket,
         # current_user = await verify_api_key(api_key=token, db=db)
         data = await websocket.receive_json()
         print("data: ",data)
-        # while True:  # Continuous loop to handle multiple messages
-        #       # Wait for each new message from the client
-        #     async for chunk in generate_chunked_stream(data):
-        #         await websocket.send_text(chunk)
+        while True:  # Continuous loop to handle multiple messages
+              # Wait for each new message from the client
+            async for chunk in generate_chunked_stream(data):
+                await websocket.send_text(chunk)
         
     except WebSocketDisconnect:
         print("Client disconnected")

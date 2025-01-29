@@ -249,6 +249,8 @@ def is_external_history_exist(db: Session, session_id: int):
 
 def save_external_session(db: Session, external_session_id: int, project_name: str):
     try:
+        import re
+        project_name = re.sub(r'[^\w]', '_', project_name)
         history_filename = str(external_session_id)+'@'+project_name+'_history'
         
         history_record = project_crud.get_external_history_by_session_id(db, external_session_id)

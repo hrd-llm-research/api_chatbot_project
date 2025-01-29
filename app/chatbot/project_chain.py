@@ -29,17 +29,19 @@ load_dotenv()
 
 # Create embeddings without GPU
 embeddings = FastEmbedEmbeddings()
-
-# llm = OllamaLLM(
-#     model="llama3.1",
-#     temperature=0.7,
-# )
-
-llm = ChatGroq(
-    model="Llama3-8b-8192",
-    temperature=1,
-    api_key="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"
+from langchain_community.llms import Ollama
+llm = Ollama(
+    base_url="http://ollama:11434",
+    model="llama3.1",
+    temperature=0.7,
+    # timeout=30,  # Increase the timeout to 30 seconds
 )
+
+# llm = ChatGroq(
+#     model="Llama3-8b-8192",
+#     temperature=1,
+#     api_key="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"
+# )
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -96,9 +98,15 @@ class CreateRAGChainRunnable(Runnable):
         db = SessionLocal()
         
         """declare variables from inputs"""
+        print("input: ====",inputs)
+        print("input: ====",inputs["input"])
         question = inputs.get('input')
         session_id = inputs.get('external_session_id')
         project_id = inputs.get('project_id')
+        
+        # question = inputs['input']['input']
+        # session_id = inputs['input']['external_session_id']
+        # project_id = inputs['input']['project_id']
         
         """Check if project & session available"""
         session_data = is_external_session_available(db, session_id)
